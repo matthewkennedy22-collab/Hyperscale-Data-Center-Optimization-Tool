@@ -1,0 +1,52 @@
+state_full,state_abbr,electric_cents_per_kwh,water_dollars_per_kgal,region
+Alaska,AK,19.31,7.2416,Pacific Noncontiguous
+Alabama,AL,7.25,3.9246,East South Central
+Arkansas,AR,6.61,2.5957333333333334,West South Central
+Arizona,AZ,7.9,4.216,Mountain
+California,CA,21.53,6.69123076923077,Pacific Contiguous
+Colorado,CO,8.62,3.2674,Mountain
+Connecticut,CT,17.12,9.8,New England
+District of Columbia,DC,10.8,13.4,South Atlantic
+Delaware,DE,8.49,9.6,South Atlantic
+Florida,FL,8.5,5.16584,South Atlantic
+Georgia,GA,7.21,4.355499999999999,South Atlantic
+Hawaii,HI,34.13,6.4976,Pacific Noncontiguous
+Iowa,IA,6.8,3.5712000000000006,West North Central
+Idaho,ID,7.69,4.3,Mountain
+Illinois,IL,8.83,4.2284,East North Central
+Indiana,IN,8.15,3.7696,East North Central
+Kansas,KS,7.73,6.6712,West North Central
+Kentucky,KY,6.5,3.3480000000000003,East South Central
+Louisiana,LA,5.61,5.505599999999999,West South Central
+Massachusetts,MA,18.19,8.7,New England
+Maryland,MD,10.01,7.8988000000000005,South Atlantic
+Maine,ME,12.46,1.9344000000000001,New England
+Michigan,MI,8.26,4.2036,East North Central
+Minnesota,MN,9.15,6.4108,West North Central
+Missouri,MO,7.87,2.9015999999999997,West North Central
+Mississippi,MS,6.81,5.8,East South Central
+Montana,MT,7.59,3.4348,Mountain
+North Carolina,NC,7.77,4.4887999999999995,South Atlantic
+North Dakota,ND,7.25,3.1744,West North Central
+Nebraska,NE,7.66,2.9884,West North Central
+New Hampshire,NH,16.21,7.4,New England
+New Jersey,NJ,11.93,11.3,Middle Atlantic
+New Mexico,NM,5.43,4.4764,Mountain
+Nevada,NV,8.64,3.7603000000000004,Mountain
+New York,NY,9.17,3.2239999999999998,Middle Atlantic
+Ohio,OH,7.1,4.9104,East North Central
+Oklahoma,OK,5.84,2.0707999999999998,West South Central
+Oregon,OR,8.05,7.014266666666666,Pacific Contiguous
+Pennsylvania,PA,7.87,5.393999999999999,Middle Atlantic
+Rhode Island,RI,19.7,9.2,New England
+South Carolina,SC,6.84,3.7861333333333334,South Atlantic
+South Dakota,SD,8.28,5.2,West North Central
+Tennessee,TN,6.21,5.10136,East South Central
+Texas,TX,6.12,5.8264499999999995,West South Central
+Utah,UT,7.86,2.1576,Mountain
+Virginia,VA,8.99,5.8838,South Atlantic
+Vermont,VT,11.58,6.9,New England
+Washington,WA,6.61,5.9644,Pacific Contiguous
+Wisconsin,WI,8.54,3.1774999999999998,East North Central
+West Virginia,WV,7.81,13.1,South Atlantic
+Wyoming,WY,7.96,4.9,Mountain
