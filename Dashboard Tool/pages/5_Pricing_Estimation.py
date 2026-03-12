@@ -99,7 +99,12 @@ elec_styled = (
     .background_gradient(subset=["Annual electric ($)"], cmap="YlGn_r")
     .format({"Annual electric ($)": lambda x: f"${x:,.0f}"})
 )
-st.dataframe(elec_styled, use_container_width=True, hide_index=True)
+elec_display_fmt = elec_display.copy()
+elec_display_fmt["Annual electric ($)"] = elec_display_fmt["Annual electric ($)"].apply(lambda x: f"${x:,.0f}")
+try:
+    st.dataframe(elec_styled, use_container_width=True, hide_index=True)
+except Exception:
+    st.dataframe(elec_display_fmt, use_container_width=True, hide_index=True)
 
 section_header("Annual water cost", "From WUE × state water rate × 8,760 h × 100 MW.")
 water_sorted = comp.sort_values("annual_water_usd").reset_index(drop=True)
@@ -112,7 +117,12 @@ water_styled = (
     .background_gradient(subset=["Annual water ($)"], cmap="YlGn_r")
     .format({"Annual water ($)": lambda x: f"${x:,.0f}"})
 )
-st.dataframe(water_styled, use_container_width=True, hide_index=True)
+water_display_fmt = water_display.copy()
+water_display_fmt["Annual water ($)"] = water_display_fmt["Annual water ($)"].apply(lambda x: f"${x:,.0f}")
+try:
+    st.dataframe(water_styled, use_container_width=True, hide_index=True)
+except Exception:
+    st.dataframe(water_display_fmt, use_container_width=True, hide_index=True)
 
 section_header("Total annual utility cost", "Annual electric $ + annual water $.")
 total_sorted = comp.sort_values("annual_total_usd").reset_index(drop=True)
@@ -132,7 +142,13 @@ total_styled = (
         "Annual total ($)": lambda x: f"${x:,.0f}",
     })
 )
-st.dataframe(total_styled, use_container_width=True, hide_index=True)
+total_display_fmt = total_display.copy()
+for c in ["Annual electric ($)", "Annual water ($)", "Annual total ($)"]:
+    total_display_fmt[c] = total_display_fmt[c].apply(lambda x: f"${x:,.0f}")
+try:
+    st.dataframe(total_styled, use_container_width=True, hide_index=True)
+except Exception:
+    st.dataframe(total_display_fmt, use_container_width=True, hide_index=True)
 # Download with numeric values (no $/commas) for CSV; use total-order for download
 total_download = total_sorted[["County", "system", "annual_electric_usd", "annual_water_usd", "annual_total_usd"]].copy()
 total_download = total_download.rename(columns={

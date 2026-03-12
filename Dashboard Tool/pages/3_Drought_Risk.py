@@ -93,7 +93,10 @@ with tab_sum:
         "pct_weeks_d2_plus": "% weeks in D2+",
     }).drop(columns=["n_weeks"], errors="ignore")
     summary_styled = summary_display.style.apply(_make_county_bg(county_color_map), subset=["County"])
-    st.dataframe(summary_styled, use_container_width=True, hide_index=True)
+    try:
+        st.dataframe(summary_styled, use_container_width=True, hide_index=True)
+    except Exception:
+        st.dataframe(summary_display, use_container_width=True, hide_index=True)
     st.download_button("Download summary (CSV)", summary_display.to_csv(index=False).encode("utf-8"), file_name="drought_summary_by_county.csv", mime="text/csv", key="dl_drought_sum")
 
     # Grouped bar: Mean and Max drought level per county (y-axis not clipped)
@@ -205,7 +208,10 @@ with tab_ts:
         cat_by_year["Year"] = cat_by_year["year"].astype(int)
         display_cat = cat_by_year[["County", "Year", "None", "D0", "D1", "D2", "D3", "D4"]]
         display_cat_styled = display_cat.style.apply(_make_county_bg(county_color_map), subset=["County"])
-        st.dataframe(display_cat_styled, use_container_width=True, hide_index=True)
+        try:
+            st.dataframe(display_cat_styled, use_container_width=True, hide_index=True)
+        except Exception:
+            st.dataframe(display_cat, use_container_width=True, hide_index=True)
         st.download_button("Download categories by year (CSV)", display_cat.to_csv(index=False).encode("utf-8"), file_name="drought_categories_by_year.csv", mime="text/csv", key="dl_drought_cat_ts")
     else:
         st.caption("Category breakdown by year requires year and category columns (pct_none, pct_d0, …) in the drought data.")
@@ -251,7 +257,10 @@ with tab_cat:
             cat_avg = latest.groupby("County", as_index=False)[cat_cols].mean().round(1)
             cat_avg = cat_avg.rename(columns={"pct_none": "None", "pct_d0": "D0", "pct_d1": "D1", "pct_d2": "D2", "pct_d3": "D3", "pct_d4": "D4"})
             cat_avg_styled = cat_avg.style.apply(_make_county_bg(county_color_map), subset=["County"])
-            st.dataframe(cat_avg_styled, use_container_width=True, hide_index=True)
+            try:
+                st.dataframe(cat_avg_styled, use_container_width=True, hide_index=True)
+            except Exception:
+                st.dataframe(cat_avg, use_container_width=True, hide_index=True)
             st.download_button("Download categories (CSV)", cat_avg.to_csv(index=False).encode("utf-8"), file_name=f"drought_categories_{int(latest_year)}.csv", mime="text/csv", key="dl_drought_cat")
     else:
         st.info("No year data available for category breakdown.")

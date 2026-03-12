@@ -93,7 +93,10 @@ The underlying simulation uses a **fixed IT load** (constant per-kWh basis), so 
             return x.apply(lambda col: col.map(lambda v: f"background-color: {lighten_hex(color_map.get(v, '#ddd'))}"))
         return _apply
     pue_styled = pue_df.style.apply(_make_county_bg(county_color_map), subset=["County"])
-    st.dataframe(pue_styled, use_container_width=True, hide_index=True)
+    try:
+        st.dataframe(pue_styled, use_container_width=True, hide_index=True)
+    except Exception:
+        st.dataframe(pue_df, use_container_width=True, hide_index=True)
     st.download_button("Download PUE (CSV)", pue_df.to_csv(index=False).encode("utf-8"), file_name="pue_by_county.csv", mime="text/csv", key="dl_pue")
     pue_long = annual.melt(id_vars=["county_fips", "county_name", "state_abbr"], value_vars=["AE_PUE", "WEC_PUE"], var_name="System", value_name="PUE")
     pue_long["System"] = pue_long["System"].map({"AE_PUE": "AE", "WEC_PUE": "WEC"})
@@ -171,7 +174,10 @@ The underlying PUE/WUE simulation uses a **fixed IT load** (constant per-kWh bas
     wue_df = annual[wue_cols].round(4)
     wue_df = wue_df.rename(columns={"county_name": "County", "state_abbr": "State", "AE_WUE": "AE WUE", "WEC_WUE": "WEC WUE"})
     wue_styled = wue_df.style.apply(_make_county_bg(county_color_map), subset=["County"])
-    st.dataframe(wue_styled, use_container_width=True, hide_index=True)
+    try:
+        st.dataframe(wue_styled, use_container_width=True, hide_index=True)
+    except Exception:
+        st.dataframe(wue_df, use_container_width=True, hide_index=True)
     st.download_button("Download WUE (CSV)", wue_df.to_csv(index=False).encode("utf-8"), file_name="wue_by_county.csv", mime="text/csv", key="dl_wue")
     wue_long = annual.melt(id_vars=["county_fips", "county_name", "state_abbr"], value_vars=["AE_WUE", "WEC_WUE"], var_name="System", value_name="WUE")
     wue_long["System"] = wue_long["System"].map({"AE_WUE": "AE", "WEC_WUE": "WEC"})
@@ -245,7 +251,10 @@ with tab_cost:
     })
     cost_df = cost_df.round(3)
     cost_styled = cost_df.style.apply(_make_county_bg(county_color_map), subset=["County"])
-    st.dataframe(cost_styled, use_container_width=True, hide_index=True)
+    try:
+        st.dataframe(cost_styled, use_container_width=True, hide_index=True)
+    except Exception:
+        st.dataframe(cost_df, use_container_width=True, hide_index=True)
     st.download_button("Download cost (CSV)", cost_df.to_csv(index=False).encode("utf-8"), file_name="effective_cost_by_county.csv", mime="text/csv", key="dl_cost")
     # Electric only (¢/kWh)
     elec_long = annual.melt(
