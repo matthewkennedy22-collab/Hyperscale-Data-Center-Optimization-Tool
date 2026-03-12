@@ -22,6 +22,7 @@ COUNTIES_PATH = DATA_DIR / "counties.csv"
 CENTROIDS_PATH = DATA_DIR / "county_centroids.csv"
 PRICING_PATH = PROJECT_ROOT / "pricing" / "pricing_by_state.csv"
 DROUGHT_PATH = PROJECT_ROOT / "drought_weekly_by_county_2015_2024_week52only.csv"
+DROUGHT_PATH_FALLBACK = PROJECT_ROOT / "drought_weekly_by_county_2015_2024_week52only_fixed_2.0.csv"
 CENSUS_CENTROIDS_URL = "https://www2.census.gov/geo/docs/reference/cenpop2020/county/CenPop2020_Mean_CO.txt"
 
 
@@ -170,11 +171,8 @@ def render_sidebar():
         st.divider()
         has_rollup = ROLLUP_WEEK_PATH.is_file() or ROLLUP_MONTH_PATH.is_file()
         has_pricing = PRICING_PATH.is_file()
-        try:
-            has_drought_url = bool(st.secrets.get("drought_csv_url") or st.secrets.get("DROUGHT_CSV_URL"))
-        except Exception:
-            has_drought_url = False
-        has_drought = DROUGHT_PATH.is_file() or has_drought_url
+        has_drought_url = _get_drought_url_from_secrets() is not None
+        has_drought = DROUGHT_PATH.is_file() or DROUGHT_PATH_FALLBACK.is_file() or has_drought_url
         status = "Rollup ✓  Pricing ✓  Drought ✓" if (has_rollup and has_pricing and has_drought) else f"Rollup {'✓' if has_rollup else '✗'}  Pricing {'✓' if has_pricing else '✗'}  Drought {'✓' if has_drought else '✗'}"
         with st.expander("Data status", expanded=False):
             st.caption(status)
@@ -294,17 +292,58 @@ def _load_drought(_cache_key: int = 0):
     return _load_drought_impl(DROUGHT_PATH)
 
 
+@st.cache_data(ttl=3600)
+def _load_drought_fallback(_cache_key: int = 0):
+    """Load drought CSV from fallback local file (e.g. _fixed_2.0.csv)."""
+    return _load_drought_impl(DROUGHT_PATH_FALLBACK)
+
+
+def _get_drought_url_from_secrets() -> str | None:
+    """Read drought CSV URL from Streamlit secrets. Tries multiple key names and nested structures."""
+    try:
+        # Top-level keys (most common)
+        url = st.secrets.get("drought_csv_url") or st.secrets.get("DROUGHT_CSV_URL")
+        if url:
+            return str(url).strip()
+        # Nested e.g. [urls] drought_csv_url = "..."
+        try:
+            urls = st.secrets.get("urls")
+            if urls is not None:
+                url = urls.get("drought_csv_url") or urls.get("DROUGHT_CSV_URL")
+                if url:
+                    return str(url).strip()
+        except Exception:
+            pass
+        # Fallback: iterate over st.secrets if it's dict-like (e.g. first run)
+        if hasattr(st.secrets, "items"):
+            for k, v in st.secrets.items():
+                if k in ("drought_csv_url", "DROUGHT_CSV_URL") and v and isinstance(v, str):
+                    return str(v).strip()
+    except Exception:
+        pass
+    return None
+
+
 def get_drought():
-    """Load drought data: local file first, then from Streamlit secrets key 'drought_csv_url' if set."""
+    """Load drought data: local file (primary or fallback) first, then from Streamlit secrets (auto)."""
     if DROUGHT_PATH.is_file():
+        st.session_state["drought_url_configured_but_failed"] = False
         cache_key = int(DROUGHT_PATH.stat().st_mtime)
         return _load_drought(cache_key)
-    try:
-        url = st.secrets.get("drought_csv_url") or st.secrets.get("DROUGHT_CSV_URL")
-    except Exception:
-        url = None
+    if DROUGHT_PATH_FALLBACK.is_file():
+        st.session_state["drought_url_configured_but_failed"] = False
+        cache_key = int(DROUGHT_PATH_FALLBACK.stat().st_mtime)
+        return _load_drought_fallback(cache_key)
+    # No local file: always try secrets (Streamlit Cloud / .streamlit/secrets.toml)
+    url = _get_drought_url_from_secrets()
     if url:
-        return _load_drought_from_url(str(url).strip())
+        df = _load_drought_from_url(url)
+        if df is None:
+            st.session_state["drought_url_configured_but_failed"] = True
+            return None
+        st.session_state["drought_url_configured_but_failed"] = False
+        return df
+    st.session_state["drought_url_configured_but_failed"] = False
     return None
 
 

@@ -18,8 +18,11 @@ page_top_anchor()
 
 drought = get_drought()
 if drought is None:
-    st.warning("Drought data not found. Place the drought weekly CSV in the project root, or set **drought_csv_url** in Streamlit secrets (e.g. in Cloud: Manage app → Settings → Secrets).")
-    st.caption("Expected: drought_weekly_by_county_2015_2024_week52only.csv (or full weeks 1–52).")
+    if st.session_state.get("drought_url_configured_but_failed"):
+        st.error("A drought URL is set in Secrets, but the app could not download the file. For Google Drive: use a direct-download link and share the file with **Anyone with the link**. Then redeploy or refresh.")
+    else:
+        st.warning("Drought data not found. Place the drought weekly CSV in the project root, or set **drought_csv_url** in Streamlit secrets (Manage app → Settings → Secrets). The app checks secrets automatically when no local file is present.")
+    st.caption("Expected: drought_weekly_by_county_2015_2024_week52only.csv (or full weeks 1–52), or the fallback filename _fixed_2.0.csv.")
     st.stop()
 
 counties_df = get_counties()
