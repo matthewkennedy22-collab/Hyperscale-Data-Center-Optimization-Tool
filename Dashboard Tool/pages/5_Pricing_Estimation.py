@@ -19,6 +19,7 @@ from _utils import (
     get_county_color_map,
     lighten_hex,
     sort_df_by_county_order,
+    L_PER_KGAL,
 )
 from ui import apply_global_css, section_header, apply_chart_theme, back_to_top_button, page_top_anchor, PLOTLY_LAYOUT
 
@@ -47,29 +48,45 @@ if comp is None or comp.empty:
 comp = sort_df_by_county_order(comp.copy(), "County")
 _, county_color_map = get_county_color_map()
 
-# Annual costs: power and water separately, then total
-# effective_electric = ¢/kWh IT, effective_water = $/kWh IT
+# On this page only: add surge-adjusted water cost. comp has base effective_water from comparison_table_with_drought.
+if pricing is not None and not pricing.empty and "surge_pct" in pricing.columns:
+    comp = comp.merge(
+        pricing[["state_abbr", "water_dollars_per_kgal", "surge_pct"]],
+        on="state_abbr",
+        how="left",
+    )
+    comp["surge_pct"] = comp["surge_pct"].fillna(0)
+    comp["pct_weeks_d2_plus"] = comp["pct_weeks_d2_plus"].fillna(0)
+    comp["effective_water_surge"] = (
+        (comp["WUE"] / L_PER_KGAL)
+        * comp["water_dollars_per_kgal"]
+        * (1 + comp["surge_pct"] * comp["pct_weeks_d2_plus"] / 100)
+    )
+else:
+    comp["effective_water_surge"] = comp["effective_water"]
+
+# Annual costs: power and water (surge-adjusted) separately, then total
 comp["annual_electric_usd"] = (comp["effective_electric"] / 100) * KWH_PER_YEAR
-comp["annual_water_usd"] = comp["effective_water"] * KWH_PER_YEAR
+comp["annual_water_usd"] = comp["effective_water_surge"] * KWH_PER_YEAR
 comp["annual_total_usd"] = comp["annual_electric_usd"] + comp["annual_water_usd"]
 
 # ---- Title and assumptions ----
 st.markdown("### Pricing estimation (100 MW IT load)")
 st.caption(
-    "Estimated annual utility cost for comparison across counties and cooling systems. "
-    "Uses state-level electric and water rates; PUE and WUE are annual averages. "
-    "Water cost may include a **drought surge** (state surge % × county % time in severe drought) when surge and drought data are available. "
-    "Not a substitute for utility quotes (e.g. demand charges, TOU)."
+    "This page is where **effective utility cost** is used: power and water costs are combined into total annual $. "
+    "Water uses the **full equation**: Water = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk (% time in severe drought). "
+    "Electric = PUE × state rate. Not a substitute for utility quotes (e.g. demand charges, TOU)."
 )
 st.markdown("**Assumptions:** IT load = **100 MW** (constant); hours = **8,760**/year.")
 
 with st.expander("Methodology", expanded=False):
     st.markdown(
+        "**Effective utility cost** (used only on this page) = effective electric + effective water (with drought surge), converted to annual $.\n\n"
         "- **Effective electric** (¢/kWh IT) = PUE × state electric rate. "
         "Annual electric $ = (effective electric ÷ 100) × 8,760 h × 100 MW.\n"
-        "- **Effective water** ($/kWh IT) = (WUE / 3785.41) × state water $/kgal × (1 + surge_pct × % severe drought). "
-        "This is **economic cost** (what you pay); when surge and drought data exist, it includes a drought surge. "
-        "Annual water $ = effective water × 8,760 h × 100 MW. For **sustainability / scarcity risk** (water stress), see Comparison Insights.\n"
+        "- **Effective water** (¢/kWh IT) = WUE × (Water $/kgal + **Penalty**), with **Penalty = Drought Surge Price × Drought Risk** (Drought risk = % of time in severe drought over last 10 years). "
+        "Equivalent form: (WUE / 3785.41) × state water $/kgal × (1 + surge_pct × % severe drought). "
+        "Annual water $ = effective water × 8,760 h × 100 MW.\n"
         "- **Total annual** = annual electric $ + annual water $."
     )
 
@@ -108,10 +125,10 @@ try:
 except Exception:
     st.dataframe(elec_display_fmt, use_container_width=True, hide_index=True)
 
-section_header("Annual water cost", "From WUE × state water rate × 8,760 h × 100 MW.")
+section_header("Annual water cost", "From WUE × state water rate × (1 + drought surge) × 8,760 h × 100 MW.")
 water_sorted = comp.sort_values("annual_water_usd").reset_index(drop=True)
-water_display = water_sorted[["County", "system", "effective_water", "annual_water_usd"]].copy()
-water_display["Effective water (¢/kWh IT)"] = (water_display["effective_water"] * 100).round(3)
+water_display = water_sorted[["County", "system", "effective_water_surge", "annual_water_usd"]].copy()
+water_display["Effective water (¢/kWh IT)"] = (water_display["effective_water_surge"] * 100).round(3)
 water_display["Annual water ($)"] = water_sorted["annual_water_usd"].values  # keep numeric for gradient
 water_display = water_display[["County", "system", "Effective water (¢/kWh IT)", "Annual water ($)"]]
 water_styled = (

@@ -47,7 +47,7 @@ ordered_county_labels, county_color_map = get_county_color_map()
 
 # Top-level title and metrics (insightful comparison, not averages)
 st.markdown("### System comparison (AE vs WEC)")
-st.caption("Annual average PUE, WUE, and effective cost by county. AE = Air Economizer, WEC = Water Economizer. Costs use state-level pricing; water cost may include a drought surge when surge and drought data are available.")
+st.caption("Annual average PUE, WUE, and effective cost by county. AE = Air Economizer, WEC = Water Economizer. Costs use state-level pricing; water cost here is **base** only (no drought surge). For cost including drought surcharges, see Pricing Estimation.")
 
 # Tabs: PUE | WUE | Cost
 tab_pue, tab_wue, tab_cost = st.tabs(["PUE comparison", "WUE comparison", "Effective cost"])
