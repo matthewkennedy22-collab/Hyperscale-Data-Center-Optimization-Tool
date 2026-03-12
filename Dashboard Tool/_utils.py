@@ -21,6 +21,7 @@ ROLLUP_PATH = ROLLUP_WEEK_PATH  # primary; loader falls back to month if week mi
 COUNTIES_PATH = DATA_DIR / "counties.csv"
 CENTROIDS_PATH = DATA_DIR / "county_centroids.csv"
 PRICING_PATH = PROJECT_ROOT / "pricing" / "pricing_by_state.csv"
+SURGE_PATH = PROJECT_ROOT / "pricing" / "surge_prices_by_state.csv"
 DROUGHT_PATH = PROJECT_ROOT / "drought_weekly_by_county_2015_2024_week52only.csv"
 DROUGHT_PATH_FALLBACK = PROJECT_ROOT / "drought_weekly_by_county_2015_2024_week52only_fixed_2.0.csv"
 DROUGHT_PATH_SLIMMED = PROJECT_ROOT / "drought_weekly_by_county_2015_2024_week52only_fixed_2.0_slimmed.csv"
@@ -42,7 +43,23 @@ def _load_rollup():
 def _load_pricing():
     if not PRICING_PATH.is_file():
         return None
-    return pd.read_csv(PRICING_PATH)
+    df = pd.read_csv(PRICING_PATH)
+    return df
+
+
+@st.cache_data
+def _load_surge():
+    """Load state-level drought surge price increase (decimal, e.g. 0.10 for 10%)."""
+    if not SURGE_PATH.is_file():
+        return None
+    try:
+        df = pd.read_csv(SURGE_PATH)
+        if "state_abbr" not in df.columns or "surge_pct" not in df.columns:
+            return None
+        df["surge_pct"] = pd.to_numeric(df["surge_pct"], errors="coerce").fillna(0)
+        return df[["state_abbr", "surge_pct"]]
+    except Exception:
+        return None
 
 
 @st.cache_data
@@ -63,7 +80,17 @@ def get_rollup():
 
 
 def get_pricing():
-    return _load_pricing()
+    """Return pricing merged with surge_pct when surge file exists. surge_pct is 0 when missing."""
+    base = _load_pricing()
+    if base is None:
+        return None
+    surge = _load_surge()
+    if surge is not None and not surge.empty:
+        base = base.merge(surge[["state_abbr", "surge_pct"]], on="state_abbr", how="left")
+        base["surge_pct"] = base["surge_pct"].fillna(0)
+    else:
+        base["surge_pct"] = 0.0
+    return base
 
 
 def get_counties():
@@ -358,8 +385,8 @@ def get_drought():
     return None
 
 
-def selected_counties_df(rollup, pricing):
-    """Filter rollup by session-state selected county FIPS and join pricing."""
+def selected_counties_df(rollup, pricing, drought_summary=None):
+    """Filter rollup by session-state selected county FIPS and join pricing. Optional drought_summary for surge-adjusted water cost."""
     if rollup is None or rollup.empty:
         return None
     selected = st.session_state.get("selected_county_fips", [])
@@ -371,16 +398,25 @@ def selected_counties_df(rollup, pricing):
     if df.empty:
         return df
     if pricing is not None and not pricing.empty and "state_abbr" in df.columns:
-        df = df.merge(
-            pricing[["state_abbr", "electric_cents_per_kwh", "water_dollars_per_kgal"]],
-            on="state_abbr",
-            how="left",
-        )
+        merge_cols = ["state_abbr", "electric_cents_per_kwh", "water_dollars_per_kgal"]
+        if "surge_pct" in pricing.columns:
+            merge_cols.append("surge_pct")
+        df = df.merge(pricing[merge_cols], on="state_abbr", how="left")
         df["effective_electric_AE"] = df["AE_PUE"] * df["electric_cents_per_kwh"]
         df["effective_electric_WEC"] = df["WEC_PUE"] * df["electric_cents_per_kwh"]
-        # Convert WUE from L/kWh to kgal/kWh to match $/kgal pricing
-        df["effective_water_AE"] = (df["AE_WUE"] / L_PER_KGAL) * df["water_dollars_per_kgal"]
-        df["effective_water_WEC"] = (df["WEC_WUE"] / L_PER_KGAL) * df["water_dollars_per_kgal"]
+        if "surge_pct" in df.columns:
+            df["surge_pct"] = df["surge_pct"].fillna(0)
+        else:
+            df["surge_pct"] = 0.0
+        if drought_summary is not None and not drought_summary.empty and "pct_weeks_d2_plus" in drought_summary.columns:
+            df = df.merge(drought_summary[["county_fips", "pct_weeks_d2_plus"]], on="county_fips", how="left")
+            df["pct_weeks_d2_plus"] = df["pct_weeks_d2_plus"].fillna(0)
+            water_mult = 1 + (df["surge_pct"] * df["pct_weeks_d2_plus"] / 100)
+            df["effective_water_AE"] = (df["AE_WUE"] / L_PER_KGAL) * df["water_dollars_per_kgal"] * water_mult
+            df["effective_water_WEC"] = (df["WEC_WUE"] / L_PER_KGAL) * df["water_dollars_per_kgal"] * water_mult
+        else:
+            df["effective_water_AE"] = (df["AE_WUE"] / L_PER_KGAL) * df["water_dollars_per_kgal"]
+            df["effective_water_WEC"] = (df["WEC_WUE"] / L_PER_KGAL) * df["water_dollars_per_kgal"]
     return df
 
 
@@ -464,19 +500,15 @@ def comparison_table_with_drought(rollup, pricing, drought_summary):
         WEC_WUE=("WEC_WUE", "mean"),
     )
     if pricing is not None and not pricing.empty:
-        annual = annual.merge(
-            pricing[["state_abbr", "electric_cents_per_kwh", "water_dollars_per_kgal"]],
-            on="state_abbr",
-            how="left",
-        )
+        merge_cols = ["state_abbr", "electric_cents_per_kwh", "water_dollars_per_kgal"]
+        if "surge_pct" in pricing.columns:
+            merge_cols.append("surge_pct")
+        annual = annual.merge(pricing[merge_cols], on="state_abbr", how="left")
         annual["effective_electric_AE"] = annual["AE_PUE"] * annual["electric_cents_per_kwh"]
         annual["effective_electric_WEC"] = annual["WEC_PUE"] * annual["electric_cents_per_kwh"]
-        # Convert WUE from L/kWh to kgal/kWh to match $/kgal pricing
-        annual["effective_water_AE"] = (annual["AE_WUE"] / L_PER_KGAL) * annual["water_dollars_per_kgal"]
-        annual["effective_water_WEC"] = (annual["WEC_WUE"] / L_PER_KGAL) * annual["water_dollars_per_kgal"]
     else:
         annual["effective_electric_AE"] = annual["effective_electric_WEC"] = 0.0
-        annual["effective_water_AE"] = annual["effective_water_WEC"] = 0.0
+        annual["surge_pct"] = 0.0
     if drought_summary is not None and not drought_summary.empty:
         annual = annual.merge(drought_summary, on="county_fips", how="left")
         annual["mean_drought"] = annual["mean_drought"].fillna(0)
@@ -487,6 +519,18 @@ def comparison_table_with_drought(rollup, pricing, drought_summary):
         annual["pct_weeks_d2_plus"] = 0.0
     if "pct_weeks_d2_plus" not in annual.columns:
         annual["pct_weeks_d2_plus"] = 0.0
+    annual["pct_weeks_d2_plus"] = annual["pct_weeks_d2_plus"].fillna(0)
+    if "surge_pct" not in annual.columns:
+        annual["surge_pct"] = 0.0
+    annual["surge_pct"] = annual["surge_pct"].fillna(0)
+    # Effective water: (WUE/L_PER_KGAL) * water_dollars_per_kgal * (1 + surge_pct * pct_severe/100)
+    if pricing is not None and not pricing.empty and "water_dollars_per_kgal" in annual.columns:
+        water_mult = 1 + (annual["surge_pct"] * annual["pct_weeks_d2_plus"] / 100)
+        annual["effective_water_AE"] = (annual["AE_WUE"] / L_PER_KGAL) * annual["water_dollars_per_kgal"] * water_mult
+        annual["effective_water_WEC"] = (annual["WEC_WUE"] / L_PER_KGAL) * annual["water_dollars_per_kgal"] * water_mult
+    else:
+        annual["effective_water_AE"] = 0.0
+        annual["effective_water_WEC"] = 0.0
     # Long format: one row per county per system; water_stress = WUE × (1 + pct_weeks_d2_plus/100)
     rows = []
     for _, r in annual.iterrows():

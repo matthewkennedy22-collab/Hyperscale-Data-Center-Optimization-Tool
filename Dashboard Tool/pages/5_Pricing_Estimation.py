@@ -58,6 +58,7 @@ st.markdown("### Pricing estimation (100 MW IT load)")
 st.caption(
     "Estimated annual utility cost for comparison across counties and cooling systems. "
     "Uses state-level electric and water rates; PUE and WUE are annual averages. "
+    "Water cost may include a **drought surge** (state surge % × county % time in severe drought) when surge and drought data are available. "
     "Not a substitute for utility quotes (e.g. demand charges, TOU)."
 )
 st.markdown("**Assumptions:** IT load = **100 MW** (constant); hours = **8,760**/year.")
@@ -66,7 +67,8 @@ with st.expander("Methodology", expanded=False):
     st.markdown(
         "- **Effective electric** (¢/kWh IT) = PUE × state electric rate. "
         "Annual electric $ = (effective electric ÷ 100) × 8,760 h × 100 MW.\n"
-        "- **Effective water** ($/kWh IT) = WUE × state water rate (WUE in L/kWh, rate in $/kgal). "
+        "- **Effective water** ($/kWh IT) = (WUE / 3785.41) × state water $/kgal × (1 + surge_pct × % severe drought). "
+        "When surge and drought data exist, water cost includes a drought surge. "
         "Annual water $ = effective water × 8,760 h × 100 MW.\n"
         "- **Total annual** = annual electric $ + annual water $."
     )

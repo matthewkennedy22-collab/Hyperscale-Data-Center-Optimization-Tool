@@ -57,7 +57,7 @@ with st.expander("How calculations work & how weighting affects the composite sc
     st.markdown("""
 **Inputs (per county × cooling system):**
 - **Effective electric cost** (¢/kWh IT) = PUE × state electric rate. Lower is better.
-- **Effective water cost** (¢/kWh IT) = WUE × state water price (converted to ¢/kWh). Lower is better.
+- **Effective water cost** (¢/kWh IT) = WUE × state water price (converted to ¢/kWh), **including a drought surge** when data is available: base water price × (1 + state surge % × county % time in severe drought). Lower is better.
 - **Water stress** = WUE × (1 + % of time in severe drought). Severe = U.S. Drought Monitor index 2–4 (D2–D4). Captures water use and exposure to severe drought; lower is better.
 
 **Normalization:** For your selected counties and systems, each of these three is scaled to 0–1: the best (lowest) value becomes 0, the worst (highest) becomes 1. So every row has three normalized scores: electric_n, water_n, water_stress_n.

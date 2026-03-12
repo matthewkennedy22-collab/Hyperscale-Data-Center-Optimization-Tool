@@ -7,7 +7,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-from _utils import render_sidebar, get_rollup, get_pricing, selected_counties_df, ensure_data, get_county_color_map, lighten_hex, sort_df_by_county_order
+from _utils import render_sidebar, get_rollup, get_pricing, get_drought, get_drought_summary_by_county, selected_counties_df, ensure_data, get_county_color_map, lighten_hex, sort_df_by_county_order
 from ui import apply_global_css, section_header, apply_chart_theme, metric_row, back_to_top_button, page_top_anchor
 
 st.set_page_config(page_title="System comparison | County Dashboard", page_icon="•", layout="wide")
@@ -18,7 +18,9 @@ ensure_data()
 
 rollup = get_rollup()
 pricing = get_pricing()
-df = selected_counties_df(rollup, pricing)
+drought = get_drought()
+drought_summary = get_drought_summary_by_county(drought) if drought is not None else None
+df = selected_counties_df(rollup, pricing, drought_summary=drought_summary)
 if df is None or df.empty:
     st.info("Select one or more counties in the sidebar to compare systems.")
     st.stop()
@@ -45,7 +47,7 @@ ordered_county_labels, county_color_map = get_county_color_map()
 
 # Top-level title and metrics (insightful comparison, not averages)
 st.markdown("### System comparison (AE vs WEC)")
-st.caption("Annual average PUE, WUE, and effective cost by county. AE = Air Economizer, WEC = Water Economizer. Costs use state-level pricing.")
+st.caption("Annual average PUE, WUE, and effective cost by county. AE = Air Economizer, WEC = Water Economizer. Costs use state-level pricing; water cost may include a drought surge when surge and drought data are available.")
 n_counties = len(annual)
 # Best PUE: lowest across all county–system combos
 best_ae = annual.loc[annual["AE_PUE"].idxmin()]
