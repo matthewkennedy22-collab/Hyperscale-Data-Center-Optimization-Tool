@@ -1,4 +1,5 @@
 """Shared data loading and helpers for the county comparison dashboard."""
+import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -261,12 +262,28 @@ def _normalize_drought_df(df: pd.DataFrame) -> pd.DataFrame:
 
 @st.cache_data(ttl=3600)
 def _load_drought_from_url(url: str) -> pd.DataFrame | None:
-    """Load drought CSV from a URL (e.g. from Streamlit secrets). Cached by URL for 1 hour."""
+    """Load drought CSV from a URL (e.g. from Streamlit secrets). Supports Google Drive links. Cached by URL for 1 hour."""
     if not url or not str(url).strip().startswith("http"):
         return None
+    url = str(url).strip()
     try:
-        df = pd.read_csv(url, timeout=120)
-        return _normalize_drought_df(df)
+        if "drive.google.com" in url:
+            # Google Drive links don't return raw CSV; use gdown to download the file first.
+            try:
+                import gdown
+            except ImportError:
+                return None
+            with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
+                tmp = f.name
+            try:
+                gdown.download(url, tmp, quiet=True)
+                df = pd.read_csv(tmp, timeout=120)
+                return _normalize_drought_df(df)
+            finally:
+                Path(tmp).unlink(missing_ok=True)
+        else:
+            df = pd.read_csv(url, timeout=120)
+            return _normalize_drought_df(df)
     except Exception:
         return None
 
