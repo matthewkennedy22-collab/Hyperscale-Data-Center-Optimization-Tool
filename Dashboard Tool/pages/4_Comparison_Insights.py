@@ -202,7 +202,11 @@ display_styled = (
     display_df.style.apply(_make_county_bg(county_color_map), subset=["County"])
     .background_gradient(subset=["Composite score"], cmap="YlGn")  # higher = greener = better
 )
-st.dataframe(display_styled, use_container_width=True, hide_index=True)
+try:
+    st.dataframe(display_styled, use_container_width=True, hide_index=True)
+except Exception:
+    # Fallback: some Streamlit/Arrow environments raise ImportError on styled dataframes
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
 st.download_button("Download comparison (CSV)", display_df.to_csv(index=False).encode("utf-8"), file_name="comparison_insights.csv", mime="text/csv", key="dl_insights")
 
 # ---- Dive into: Power (electric cost) ----

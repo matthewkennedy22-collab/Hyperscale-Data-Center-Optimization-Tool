@@ -18,7 +18,7 @@ page_top_anchor()
 
 drought = get_drought()
 if drought is None:
-    st.warning("Drought data not found. Place the drought weekly CSV in the project root.")
+    st.warning("Drought data not found. Place the drought weekly CSV in the project root, or set **drought_csv_url** in Streamlit secrets (e.g. in Cloud: Manage app → Settings → Secrets).")
     st.caption("Expected: drought_weekly_by_county_2015_2024_week52only.csv (or full weeks 1–52).")
     st.stop()
 

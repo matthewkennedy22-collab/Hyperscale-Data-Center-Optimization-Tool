@@ -169,7 +169,11 @@ def render_sidebar():
         st.divider()
         has_rollup = ROLLUP_WEEK_PATH.is_file() or ROLLUP_MONTH_PATH.is_file()
         has_pricing = PRICING_PATH.is_file()
-        has_drought = DROUGHT_PATH.is_file()
+        try:
+            has_drought_url = bool(st.secrets.get("drought_csv_url") or st.secrets.get("DROUGHT_CSV_URL"))
+        except Exception:
+            has_drought_url = False
+        has_drought = DROUGHT_PATH.is_file() or has_drought_url
         status = "Rollup ✓  Pricing ✓  Drought ✓" if (has_rollup and has_pricing and has_drought) else f"Rollup {'✓' if has_rollup else '✗'}  Pricing {'✓' if has_pricing else '✗'}  Drought {'✓' if has_drought else '✗'}"
         with st.expander("Data status", expanded=False):
             st.caption(status)
@@ -238,16 +242,53 @@ def _load_drought_impl(path: Path) -> pd.DataFrame | None:
     return df
 
 
+def _normalize_drought_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply same column normalization as _load_drought_impl to a DataFrame (e.g. from URL)."""
+    if df is None or df.empty:
+        return df
+    df = df.copy()
+    if "county_fips" in df.columns:
+        df["county_fips"] = df["county_fips"].astype(str).str.replace(r"\.0$", "", regex=True).str.zfill(5)
+    if "week_end_date" in df.columns:
+        df["week_end_date"] = pd.to_datetime(df["week_end_date"], errors="coerce")
+        if "year" not in df.columns:
+            df["year"] = df["week_end_date"].dt.year
+        if "week_number" not in df.columns:
+            iso = df["week_end_date"].dt.isocalendar()
+            df["week_number"] = iso.week.fillna(1).astype(int)
+    return df
+
+
+@st.cache_data(ttl=3600)
+def _load_drought_from_url(url: str) -> pd.DataFrame | None:
+    """Load drought CSV from a URL (e.g. from Streamlit secrets). Cached by URL for 1 hour."""
+    if not url or not str(url).strip().startswith("http"):
+        return None
+    try:
+        df = pd.read_csv(url, timeout=120)
+        return _normalize_drought_df(df)
+    except Exception:
+        return None
+
+
 @st.cache_data(ttl=3600)
 def _load_drought(_cache_key: int = 0):
-    """Load drought CSV. _cache_key should be file mtime so cache invalidates when file is updated."""
+    """Load drought CSV from local file. _cache_key should be file mtime so cache invalidates when file is updated."""
     return _load_drought_impl(DROUGHT_PATH)
 
 
 def get_drought():
-    """Load drought data; use file mtime so updated files (e.g. with new CT data) are re-read."""
-    cache_key = int(DROUGHT_PATH.stat().st_mtime) if DROUGHT_PATH.is_file() else 0
-    return _load_drought(cache_key)
+    """Load drought data: local file first, then from Streamlit secrets key 'drought_csv_url' if set."""
+    if DROUGHT_PATH.is_file():
+        cache_key = int(DROUGHT_PATH.stat().st_mtime)
+        return _load_drought(cache_key)
+    try:
+        url = st.secrets.get("drought_csv_url") or st.secrets.get("DROUGHT_CSV_URL")
+    except Exception:
+        url = None
+    if url:
+        return _load_drought_from_url(str(url).strip())
+    return None
 
 
 def selected_counties_df(rollup, pricing):

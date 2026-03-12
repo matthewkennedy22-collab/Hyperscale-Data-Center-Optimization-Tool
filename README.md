@@ -143,7 +143,8 @@ For **all** app features, add these when possible:
 
 - **Drought file**  
   Place the CSV in the **project root** (same level as `Dashboard Tool` and `data`). The app looks for:  
-  `drought_weekly_by_county_2015_2024_week52only.csv`.
+  `drought_weekly_by_county_2015_2024_week52only.csv`.  
+  **When deploying (e.g. Streamlit Cloud):** If the file is not in the repo, set the secret **`drought_csv_url`** to the full URL of the CSV (Manage app → Settings → Secrets). The app will load drought from that URL when the local file is missing.
 
 - **County centroids (map)**  
   From the project root, run:

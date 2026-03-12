@@ -50,6 +50,9 @@ GitHub **rejects any file over 100 MB**. Your project has several much larger fi
 3. In Streamlit Cloud: “New app” → connect the repo, set **Main file path** to e.g. `Dashboard Tool/Home.py`, and (if needed) set **Working directory** so that paths like `data/`, `pricing/` resolve correctly.
 4. Deploy. If you use URL-based loading for large data, set the base URL (or full URLs) in the app’s **Secrets** or environment variables so the app can fetch the files at startup.
 
+**Drought data via Secrets (recommended when the CSV is not in the repo):**  
+In Streamlit Cloud: **Manage app → Settings → Secrets**, add a key `drought_csv_url` (or `DROUGHT_CSV_URL`) with the full URL to the drought CSV (e.g. a direct download link from Google Drive, S3, or GitHub Releases). The app will load drought from this URL when the local file is not present.
+
 ## Summary
 
 - **Yes:** You need the app (and any data it needs) in a GitHub repo to deploy on Streamlit Community Cloud.  
