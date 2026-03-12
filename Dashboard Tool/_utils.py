@@ -23,6 +23,7 @@ CENTROIDS_PATH = DATA_DIR / "county_centroids.csv"
 PRICING_PATH = PROJECT_ROOT / "pricing" / "pricing_by_state.csv"
 DROUGHT_PATH = PROJECT_ROOT / "drought_weekly_by_county_2015_2024_week52only.csv"
 DROUGHT_PATH_FALLBACK = PROJECT_ROOT / "drought_weekly_by_county_2015_2024_week52only_fixed_2.0.csv"
+DROUGHT_PATH_SLIMMED = PROJECT_ROOT / "drought_weekly_by_county_2015_2024_week52only_fixed_2.0_slimmed.csv"
 CENSUS_CENTROIDS_URL = "https://www2.census.gov/geo/docs/reference/cenpop2020/county/CenPop2020_Mean_CO.txt"
 
 
@@ -172,7 +173,7 @@ def render_sidebar():
         has_rollup = ROLLUP_WEEK_PATH.is_file() or ROLLUP_MONTH_PATH.is_file()
         has_pricing = PRICING_PATH.is_file()
         has_drought_url = _get_drought_url_from_secrets() is not None
-        has_drought = DROUGHT_PATH.is_file() or DROUGHT_PATH_FALLBACK.is_file() or has_drought_url
+        has_drought = DROUGHT_PATH.is_file() or DROUGHT_PATH_FALLBACK.is_file() or DROUGHT_PATH_SLIMMED.is_file() or has_drought_url
         status = "Rollup ✓  Pricing ✓  Drought ✓" if (has_rollup and has_pricing and has_drought) else f"Rollup {'✓' if has_rollup else '✗'}  Pricing {'✓' if has_pricing else '✗'}  Drought {'✓' if has_drought else '✗'}"
         with st.expander("Data status", expanded=False):
             st.caption(status)
@@ -298,6 +299,12 @@ def _load_drought_fallback(_cache_key: int = 0):
     return _load_drought_impl(DROUGHT_PATH_FALLBACK)
 
 
+@st.cache_data(ttl=3600)
+def _load_drought_slimmed(_cache_key: int = 0):
+    """Load drought CSV from slimmed file (under 100 MB; year/week_number derived from week_end_date)."""
+    return _load_drought_impl(DROUGHT_PATH_SLIMMED)
+
+
 def _get_drought_url_from_secrets() -> str | None:
     """Read drought CSV URL from Streamlit secrets. Tries multiple key names and nested structures."""
     try:
@@ -325,7 +332,7 @@ def _get_drought_url_from_secrets() -> str | None:
 
 
 def get_drought():
-    """Load drought data: local file (primary or fallback) first, then from Streamlit secrets (auto)."""
+    """Load drought data: local file (primary, fallback, or slimmed) first, then from Streamlit secrets (auto)."""
     if DROUGHT_PATH.is_file():
         st.session_state["drought_url_configured_but_failed"] = False
         cache_key = int(DROUGHT_PATH.stat().st_mtime)
@@ -334,6 +341,10 @@ def get_drought():
         st.session_state["drought_url_configured_but_failed"] = False
         cache_key = int(DROUGHT_PATH_FALLBACK.stat().st_mtime)
         return _load_drought_fallback(cache_key)
+    if DROUGHT_PATH_SLIMMED.is_file():
+        st.session_state["drought_url_configured_but_failed"] = False
+        cache_key = int(DROUGHT_PATH_SLIMMED.stat().st_mtime)
+        return _load_drought_slimmed(cache_key)
     # No local file: always try secrets (Streamlit Cloud / .streamlit/secrets.toml)
     url = _get_drought_url_from_secrets()
     if url:
