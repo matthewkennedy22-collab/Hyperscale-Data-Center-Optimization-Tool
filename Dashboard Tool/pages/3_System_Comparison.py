@@ -48,26 +48,6 @@ ordered_county_labels, county_color_map = get_county_color_map()
 # Top-level title and metrics (insightful comparison, not averages)
 st.markdown("### System comparison (AE vs WEC)")
 st.caption("Annual average PUE, WUE, and effective cost by county. AE = Air Economizer, WEC = Water Economizer. Costs use state-level pricing; water cost may include a drought surge when surge and drought data are available.")
-n_counties = len(annual)
-# Best PUE: lowest across all county–system combos
-best_ae = annual.loc[annual["AE_PUE"].idxmin()]
-best_wec = annual.loc[annual["WEC_PUE"].idxmin()]
-best_pue_ae = annual["AE_PUE"].min()
-best_pue_wec = annual["WEC_PUE"].min()
-if best_pue_ae <= best_pue_wec:
-    best_pue_label = f"{best_pue_ae:.3f} ({best_ae['county_name']}, AE)"
-else:
-    best_pue_label = f"{best_pue_wec:.3f} ({best_wec['county_name']}, WEC)"
-# Lowest effective electric cost (any county, any system)
-annual["best_elec"] = annual[["effective_electric_AE", "effective_electric_WEC"]].min(axis=1)
-annual["best_elec_sys"] = annual.apply(lambda r: "AE" if r["effective_electric_AE"] <= r["effective_electric_WEC"] else "WEC", axis=1)
-low_elec = annual.loc[annual["best_elec"].idxmin()]
-low_elec_label = f"{low_elec['county_name']}, {low_elec['state_abbr']} ({low_elec['best_elec_sys']})"
-metric_row([
-    (str(n_counties), "Counties"),
-    (best_pue_label, "Best PUE (lowest)"),
-    (low_elec_label[:24] + "…" if len(low_elec_label) > 24 else low_elec_label, "Lowest eff. electric"),
-])
 
 # Tabs: PUE | WUE | Cost
 tab_pue, tab_wue, tab_cost = st.tabs(["PUE comparison", "WUE comparison", "Effective cost"])

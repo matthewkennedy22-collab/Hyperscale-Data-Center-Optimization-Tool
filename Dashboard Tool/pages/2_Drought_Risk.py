@@ -40,8 +40,7 @@ df = sort_df_by_county_order(df, "County")
 _, county_color_map = get_county_color_map()
 
 st.markdown("### Drought risk & patterns")
-n_weeks_available = df["week_number"].nunique() if "week_number" in df.columns else 0
-st.caption("10-year weekly drought index. 0 = no drought, 5 = exceptional (D4)." + (" Seasonal pattern available (weeks 1–52)." if n_weeks_available >= 2 else " Single week in data — seasonal pattern not shown."))
+st.caption("10-year weekly drought index. 0 = no drought, 5 = exceptional (D4).")
 
 summary = df.groupby(["county_fips", "County"], as_index=False).agg(
     mean_drought=("drought_level_avg", "mean"),
@@ -62,15 +61,10 @@ metric_row([
 ])
 
 # Tabs at top: Risk summary first (Drought risk summary by county)
-tab_names = ["Risk summary", "10-year trend"]
-if n_weeks_available >= 2:
-    tab_names.append("Seasonal pattern")
-tab_names.append("Category breakdown")
+tab_names = ["Risk summary", "Category breakdown"]
 tabs = st.tabs(tab_names)
 tab_sum = tabs[0]
-tab_ts = tabs[1]
-tab_seasonal = tabs[2] if n_weeks_available >= 2 else None
-tab_cat = tabs[-1]
+tab_cat = tabs[1]
 
 def _make_county_bg(color_map):
     def _apply(x):
@@ -98,29 +92,6 @@ with tab_sum:
     except Exception:
         st.dataframe(summary_display, use_container_width=True, hide_index=True)
     st.download_button("Download summary (CSV)", summary_display.to_csv(index=False).encode("utf-8"), file_name="drought_summary_by_county.csv", mime="text/csv", key="dl_drought_sum")
-
-    # Grouped bar: Mean and Max drought level per county (y-axis not clipped)
-    sum_long = summary.melt(id_vars=["County"], value_vars=["mean_drought", "max_drought"], var_name="Metric", value_name="Drought level")
-    sum_long["Metric"] = sum_long["Metric"].map({"mean_drought": "Mean (10-yr avg)", "max_drought": "Max (worst week)"})
-    fig_summary = px.bar(
-        sum_long, x="County", y="Drought level", color="Metric", barmode="group",
-        title="Mean and max drought level by county (0 = none, 5 = D4 exceptional)",
-        labels={"Drought level": "Drought level"},
-        color_discrete_sequence=["#0e7490", "#ea580c"],
-        text="Drought level",
-    )
-    fig_summary.update_traces(texttemplate="%{text:.2f}", textposition="outside")
-    fig_summary = apply_chart_theme(fig_summary)
-    y_max = summary["max_drought"].max()
-    fig_summary.add_hline(y=2.0, line_dash="dash", line_color="gray", annotation_text="D2 threshold")
-    fig_summary.update_layout(
-        xaxis_tickangle=-45,
-        yaxis=dict(range=[0, max(y_max * 1.08 + 0.1, 2.2)]),
-        showlegend=True,
-        legend=dict(title="", orientation="v", x=1.02, y=1, xanchor="left", yanchor="top"),
-        margin=dict(b=80, r=160),
-    )
-    st.plotly_chart(fig_summary, use_container_width=True)
 
     # % weeks in D2+ (severe or worse)
     section_header("% of weeks in D2+ (severe or worse)", "Share of 10-year weeks with drought level ≥ 2.")
@@ -189,63 +160,6 @@ with tab_sum:
             st.plotly_chart(fig_area, use_container_width=True)
     else:
         st.caption("Stacked area charts require *week_end_date* and category columns (pct_none, pct_d0, …) in the drought data.")
-
-with tab_ts:
-    section_header("Drought over time (10 years)", "Weekly drought level by county.")
-    df_ts = df.sort_values("week_end_date")
-    fig_ts = px.line(df_ts, x="week_end_date", y="drought_level_avg", color="County", title="Weekly drought level", labels={"drought_level_avg": "Drought level", "week_end_date": "Week end date"}, color_discrete_map=county_color_map)
-    fig_ts = apply_chart_theme(fig_ts, height=420)
-    fig_ts.update_layout(legend=dict(orientation="v", x=1.02, y=1, xanchor="left", yanchor="top"))
-    st.plotly_chart(fig_ts, use_container_width=True)
-
-    # Category breakdown by year (same table style as Category breakdown tab, for each year in the trend)
-    section_header("Drought category breakdown by year", "Percent of county area in each drought category, by year.")
-    cat_cols = ["pct_none", "pct_d0", "pct_d1", "pct_d2", "pct_d3", "pct_d4"]
-    if "year" in df.columns and all(c in df.columns for c in cat_cols):
-        cat_by_year = df.groupby(["County", "year"], as_index=False)[cat_cols].mean().round(1)
-        cat_by_year = cat_by_year.rename(columns={"pct_none": "None", "pct_d0": "D0", "pct_d1": "D1", "pct_d2": "D2", "pct_d3": "D3", "pct_d4": "D4"})
-        cat_by_year = sort_df_by_county_order(cat_by_year, "County")
-        cat_by_year["Year"] = cat_by_year["year"].astype(int)
-        display_cat = cat_by_year[["County", "Year", "None", "D0", "D1", "D2", "D3", "D4"]]
-        display_cat_styled = display_cat.style.apply(_make_county_bg(county_color_map), subset=["County"])
-        try:
-            st.dataframe(display_cat_styled, use_container_width=True, hide_index=True)
-        except Exception:
-            st.dataframe(display_cat, use_container_width=True, hide_index=True)
-        st.download_button("Download categories by year (CSV)", display_cat.to_csv(index=False).encode("utf-8"), file_name="drought_categories_by_year.csv", mime="text/csv", key="dl_drought_cat_ts")
-    else:
-        st.caption("Category breakdown by year requires year and category columns (pct_none, pct_d0, …) in the drought data.")
-
-if tab_seasonal is not None:
-    with tab_seasonal:
-        section_header("Seasonal pattern (by month)", "Average drought by week across available years; axis labeled by month. One line per county.")
-        week_avg = df.groupby(["county_fips", "week_number"], as_index=False)["drought_level_avg"].mean().round(3)
-        county_label = df.drop_duplicates("county_fips")[["county_fips", "County"]].set_index("county_fips")["County"]
-        week_avg["County"] = week_avg["county_fips"].map(county_label)
-        week_avg = week_avg.dropna(subset=["County"])
-        week_avg = sort_df_by_county_order(week_avg, "County")
-        week_avg["_x"] = week_avg["week_number"]
-        week_avg = week_avg.sort_values(["County", "_x"]).reset_index(drop=True)
-        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        tickvals = [1, 5, 9, 14, 18, 23, 27, 31, 36, 40, 44, 48]
-        fig_week = px.line(
-            week_avg, x="_x", y="drought_level_avg", color="County",
-            title="Avg drought over the year (1 line per county)",
-            labels={"drought_level_avg": "Avg drought level", "_x": "Month"},
-            color_discrete_map=county_color_map,
-        )
-        fig_week = apply_chart_theme(fig_week, height=320)
-        fig_week.update_layout(
-            xaxis_title="Month",
-            xaxis=dict(
-                tickvals=tickvals, ticktext=month_names, tickangle=-45, range=[0.5, 52.5],
-                tickfont=dict(size=14, color="#1f2937"),
-                title_font=dict(size=14),
-            ),
-            yaxis=dict(range=[0, None], autorange=True),
-            margin=dict(b=100, r=160),
-        )
-        st.plotly_chart(fig_week, use_container_width=True)
 
 with tab_cat:
     latest_year = df["year"].max()
