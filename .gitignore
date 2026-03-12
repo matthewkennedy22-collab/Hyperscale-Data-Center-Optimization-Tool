@@ -1,0 +1,35 @@
+# Large data files (GitHub limit 100 MB per file; keep these local or use cloud storage)
+*.duckdb
+*.duckdb.wal
+amplytico.duckdb.zip
+weather_hourly_with_counties.csv
+drought_weekly_by_county_2015_2024.csv
+drought_weekly_by_county_2015_2024_week52only.csv
+drought_weekly_by_county_2015_2024_week52only_fixed.csv
+drought_weekly_by_county_2015_2024_week52only_fixed_2.0.csv
+drought_weekly_by_county_2024.csv
+data/FINAL_counties_with_pue_wue.csv
+data/FINAL_counties_with_pue_wue_fixed.csv
+data/Final_counties_with_pue_wue_climate_zone.csv
+tableau/*.hyper
+PUE WUE SIM/weather_hourly_with_counties_with_pue_wue.csv
+PUE WUE SIM/weather_hourly_connecticut_with_pue_wue.csv
+
+# Optional: ignore built rollup if it exceeds 100 MB (uncomment if needed)
+# data/county_week_rollup.csv
+# data/county_month_rollup.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.env
+.venv/
+venv/
+
+# IDE / OS
+.DS_Store
+.cursor/
+*.swp
+*.swo
