@@ -57,8 +57,8 @@ with st.expander("How calculations work & how weighting affects the composite sc
     st.markdown("""
 **Inputs (per county × cooling system):**
 - **Effective electric cost** (¢/kWh IT) = PUE × state electric rate. Lower is better.
-- **Effective water cost** (¢/kWh IT) = WUE × state water price (converted to ¢/kWh), **including a drought surge** when data is available: base water price × (1 + state surge % × county % time in severe drought). Lower is better.
-- **Water stress** = WUE × (1 + % of time in severe drought). Severe = U.S. Drought Monitor index 2–4 (D2–D4). Captures water use and exposure to severe drought; lower is better.
+- **Effective water cost** (¢/kWh IT) = WUE × state water price (converted to ¢/kWh), **including a drought surge** when data is available: base water price × (1 + state surge % × county % time in severe drought). Lower is better. *Economics: what you pay.*
+- **Water stress** = WUE × (1 + % of time in severe drought). Severe = U.S. Drought Monitor index 2–4 (D2–D4). Lower is better. *Sustainability & scarcity risk: water use × drought exposure — use for ESG, regulatory risk, and long-term resource risk, not just cost.*
 
 **Normalization:** For your selected counties and systems, each of these three is scaled to 0–1: the best (lowest) value becomes 0, the worst (highest) becomes 1. So every row has three normalized scores: electric_n, water_n, water_stress_n.
 
@@ -175,7 +175,7 @@ metric_row([
 
 # ---- Main comparison table (top level) ----
 ordered_labels, county_color_map = get_county_color_map()
-section_header("Comparison table", "PUE, WUE, effective costs (¢/kWh IT), drought, water stress. Composite uses the Power ↔ Water weight above.")
+section_header("Comparison table", "PUE, WUE, effective costs (¢/kWh IT), drought, water stress. **Eff. water** = economic cost (what you pay); **Water stress** = sustainability / scarcity risk (water use × drought exposure). Composite uses the Power ↔ Water weight above.")
 display_cols = ["County", "system", "PUE", "WUE", "effective_electric", "effective_water_cents", "mean_drought", "pct_weeks_d2_plus", "water_stress", "composite"]
 display_df = comp[display_cols].copy()
 display_df = display_df.rename(columns={
@@ -241,7 +241,7 @@ st.plotly_chart(fig_cost, use_container_width=True)
 
 # ---- Dive into: Water (cost & scarcity) ----
 st.markdown("---")
-section_header("Water: cost and scarcity (drought)", "Effective water cost (¢/kWh IT) and water stress (WUE × (1 + % time in severe drought, D2–D4)). Lower is better in dry areas.")
+section_header("Water: cost and scarcity (drought)", "**Effective water cost** = what you pay (¢/kWh IT, incl. drought surge). **Water stress** = sustainability / scarcity risk: WUE × (1 + % time in severe drought, D2–D4) — use for ESG and long-term risk. Lower is better for both.")
 # Water stress bar chart
 fig_ws = px.bar(
     comp,
@@ -250,8 +250,8 @@ fig_ws = px.bar(
     color="County",
     pattern_shape="system",
     barmode="group",
-    title="Water stress by county and system (WUE × (1 + % time in severe drought))",
-    labels={"water_stress": "Water stress", "system": "System"},
+    title="Water stress (sustainability / scarcity risk) by county and system",
+    labels={"water_stress": "Water stress (WUE × drought exposure)", "system": "System"},
     color_discrete_map=county_color_map,
     pattern_shape_map=SYSTEM_PATTERN_MAP,
 )
@@ -294,8 +294,8 @@ st.markdown(
 with st.expander("How the composite is calculated", expanded=False):
     st.markdown(
         "- **Electric:** Effective electric cost (¢/kWh IT) = PUE × state rate. Normalized so the worst county×system in your selection = 1.\n"
-        "- **Water cost:** Effective water cost (¢/kWh IT) = WUE × state water rate. Normalized the same way.\n"
-        "- **Water stress:** WUE × (1 + % of time in severe drought), with severe = index 2–4 (D2–D4). Normalized the same way.\n"
+        "- **Water cost:** Effective water cost (¢/kWh IT) = economics (what you pay, incl. drought surge when available). Normalized the same way.\n"
+        "- **Water stress:** Sustainability / scarcity risk = WUE × (1 + % of time in severe drought, D2–D4). Use for ESG and long-term risk. Normalized the same way.\n"
         "- **Weights:** Power slider sets how much to favor power vs water. Composite = 100 × (1 − weighted average of normalized costs). Score 0–100; higher = better overall fit."
     )
 

@@ -68,8 +68,8 @@ with st.expander("Methodology", expanded=False):
         "- **Effective electric** (¢/kWh IT) = PUE × state electric rate. "
         "Annual electric $ = (effective electric ÷ 100) × 8,760 h × 100 MW.\n"
         "- **Effective water** ($/kWh IT) = (WUE / 3785.41) × state water $/kgal × (1 + surge_pct × % severe drought). "
-        "When surge and drought data exist, water cost includes a drought surge. "
-        "Annual water $ = effective water × 8,760 h × 100 MW.\n"
+        "This is **economic cost** (what you pay); when surge and drought data exist, it includes a drought surge. "
+        "Annual water $ = effective water × 8,760 h × 100 MW. For **sustainability / scarcity risk** (water stress), see Comparison Insights.\n"
         "- **Total annual** = annual electric $ + annual water $."
     )
 
