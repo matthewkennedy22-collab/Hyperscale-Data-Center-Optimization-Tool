@@ -62,10 +62,13 @@ st.caption("Compare counties and cooling systems (AE vs WEC) by power cost, wate
 # Dropdown above slider: how the composite is calculated
 with st.expander("How the composite is calculated", expanded=False):
     st.markdown("""
-- **Electric:** PUE × state rate → ¢/kWh IT. Normalized so the worst county×system in your selection = 1.
-- **Water (base):** WUE × state water $/kgal at base rates (no surge). Normalized the same way. For cost including surcharges, see Pricing Estimation.
-- **Scarcity risk:** *How risky is this location's water future?* — WUE × (1 + % of time in severe drought, D2–D4). Normalized the same way.
-- **Weights:** Power slider sets how much to favor power vs water. **Composite = 100 × (1 − weighted average of normalized costs).** Score 0–100; higher = better overall fit.
+- **Electric:** PUE × state rate → ¢/kWh IT.
+- **Water (base):** WUE × state water $/kgal at base rates (no surge). For cost including surcharges, see Pricing Estimation.
+- **Water stress risk:** *How risky is this location's water future?* — WUE × (1 + % of time in severe drought, D2–D4).
+
+**Normalization:** For each metric, we scale to 0–1 within your selection: **best** (lowest) = 0, **worst** (highest) = 1. So a higher normalized value means worse.
+
+**Composite:** 100 × (1 − weighted average of those normalized scores). So **higher composite = better** overall fit (0–100). The Power slider sets the weights.
 """)
 
 st.markdown("**Set your priority:** Drag the slider to favor **Power** (electric cost only), **Water** (water cost + drought), or a balance. The composite score and rankings below update as you move it.")
@@ -239,11 +242,11 @@ if not high_drought.empty:
     ae_ws = high_drought[high_drought["system"] == "AE"]["water_stress"].mean()
     wec_ws = high_drought[high_drought["system"] == "WEC"]["water_stress"].mean()
     if wec_ws > ae_ws * 1.05:
-        insights.append(f"In **high-drought counties** (mean drought ≥ 1), **AE** has lower average scarcity risk ({ae_ws:.2f}) than **WEC** ({wec_ws:.2f}) — AE may be preferable where water is scarce.")
+        insights.append(f"In **high-drought counties** (mean drought ≥ 1), **AE** has lower average water stress risk ({ae_ws:.2f}) than **WEC** ({wec_ws:.2f}) — AE may be preferable where water is scarce.")
     elif ae_ws > wec_ws * 1.05:
-        insights.append(f"In **high-drought counties**, **WEC** has lower average scarcity risk ({wec_ws:.2f}) than **AE** ({ae_ws:.2f}).")
+        insights.append(f"In **high-drought counties**, **WEC** has lower average water stress risk ({wec_ws:.2f}) than **AE** ({ae_ws:.2f}).")
 else:
-    insights.append("Drought levels are low in selected counties; scarcity risk is driven mainly by WUE.")
+    insights.append("Drought levels are low in selected counties; water stress risk is driven mainly by WUE.")
 
 # Electric cost spread
 try:

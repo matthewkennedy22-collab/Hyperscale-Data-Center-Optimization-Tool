@@ -73,21 +73,21 @@ comp["annual_total_usd"] = comp["annual_electric_usd"] + comp["annual_water_usd"
 # ---- Title and assumptions ----
 st.markdown("### Pricing estimation (100 MW IT load)")
 st.caption(
-    "This page is where **effective utility cost** is used: power and water costs are combined into total annual $. "
-    "Water uses the **full equation**: Water = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk (% time in severe drought). "
+    "This page is where effective utility cost is used: power and water costs are combined into total annual $. "
+    "Water uses the full equation: Water = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk (% time in severe drought). "
     "Electric = PUE × state rate. Not a substitute for utility quotes (e.g. demand charges, TOU)."
 )
 st.markdown("**Assumptions:** IT load = **100 MW** (constant); hours = **8,760**/year.")
 
 with st.expander("Methodology", expanded=False):
     st.markdown(
-        "**Effective utility cost** (used only on this page) = effective electric + effective water (with drought surge), converted to annual $.\n\n"
-        "- **Effective electric** (¢/kWh IT) = PUE × state electric rate. "
+        "Effective utility cost (used only on this page) = effective electric + effective water (with drought surge), converted to annual $.\n\n"
+        "- Effective electric (¢/kWh IT) = PUE × state electric rate. "
         "Annual electric $ = (effective electric ÷ 100) × 8,760 h × 100 MW.\n"
-        "- **Effective water** (¢/kWh IT) = WUE × (Water $/kgal + **Penalty**), with **Penalty = Drought Surge Price × Drought Risk** (Drought risk = % of time in severe drought over last 10 years). "
+        "- Effective water (¢/kWh IT) = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk (Drought risk = % of time in severe drought over last 10 years). "
         "Equivalent form: (WUE / 3785.41) × state water $/kgal × (1 + surge_pct × % severe drought). "
         "Annual water $ = effective water × 8,760 h × 100 MW.\n"
-        "- **Total annual** = annual electric $ + annual water $."
+        "- Total annual = annual electric $ + annual water $."
     )
 
 def _fmt_currency(s: pd.Series) -> pd.Series:
@@ -106,16 +106,16 @@ elec_display = elec_display.rename(columns={
 })
 elec_display["Effective electric (¢/kWh IT)"] = elec_display["Effective electric (¢/kWh IT)"].round(4)
 elec_display["Annual electric ($)"] = elec_sorted["annual_electric_usd"].values  # keep numeric for gradient
+elec_display = elec_display.rename(columns={"system": "System"})
 def _make_county_bg(color_map):
     def _apply(x):
-        # Styler passes a Series when subset is one column, DataFrame when multiple
         if isinstance(x, pd.Series):
             return x.map(lambda v: f"background-color: {lighten_hex(color_map.get(v, '#ddd'))}")
         return x.apply(lambda col: col.map(lambda v: f"background-color: {lighten_hex(color_map.get(v, '#ddd'))}"))
     return _apply
 elec_styled = (
     elec_display.style.apply(_make_county_bg(county_color_map), subset=["County"])
-    .background_gradient(subset=["Annual electric ($)"], cmap="YlGn_r")
+    .background_gradient(subset=["Annual electric ($)"], cmap="YlGn_r")  # darker green = lower cost = better
     .format({"Annual electric ($)": lambda x: f"${x:,.0f}"})
 )
 elec_display_fmt = elec_display.copy()
@@ -131,9 +131,10 @@ water_display = water_sorted[["County", "system", "effective_water_surge", "annu
 water_display["Effective water (¢/kWh IT)"] = (water_display["effective_water_surge"] * 100).round(3)
 water_display["Annual water ($)"] = water_sorted["annual_water_usd"].values  # keep numeric for gradient
 water_display = water_display[["County", "system", "Effective water (¢/kWh IT)", "Annual water ($)"]]
+water_display = water_display.rename(columns={"system": "System"})
 water_styled = (
     water_display.style.apply(_make_county_bg(county_color_map), subset=["County"])
-    .background_gradient(subset=["Annual water ($)"], cmap="YlGn_r")
+    .background_gradient(subset=["Annual water ($)"], cmap="YlGn_r")  # darker green = lower cost = better
     .format({"Annual water ($)": lambda x: f"${x:,.0f}"})
 )
 water_display_fmt = water_display.copy()
@@ -147,14 +148,15 @@ section_header("Total annual utility cost", "Annual electric $ + annual water $.
 total_sorted = comp.sort_values("annual_total_usd").reset_index(drop=True)
 total_display = total_sorted[["County", "system", "annual_electric_usd", "annual_water_usd", "annual_total_usd"]].copy()
 total_display = total_display.rename(columns={
+    "system": "System",
     "annual_electric_usd": "Annual electric ($)",
     "annual_water_usd": "Annual water ($)",
     "annual_total_usd": "Annual total ($)",
 })
-# Keep numeric for gradient on last column; format all cost columns as currency
+# County column = county color; cost columns = green gradient (darker = lower = better)
 total_styled = (
     total_display.style.apply(_make_county_bg(county_color_map), subset=["County"])
-    .background_gradient(subset=["Annual total ($)"], cmap="YlGn_r")
+    .background_gradient(subset=["Annual electric ($)", "Annual water ($)", "Annual total ($)"], cmap="YlGn_r")
     .format({
         "Annual electric ($)": lambda x: f"${x:,.0f}",
         "Annual water ($)": lambda x: f"${x:,.0f}",
