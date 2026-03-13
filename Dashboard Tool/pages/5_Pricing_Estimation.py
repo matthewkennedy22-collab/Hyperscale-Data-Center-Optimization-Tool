@@ -75,7 +75,7 @@ st.markdown("### Pricing estimation")
 _static_caption = (
     "Estimate annual power and water costs for your selected counties and cooling systems. "
     "Uses effective electric and water rates; water costs include drought surge where applicable. "
-    "For illustration only—not a substitute for utility quotes."
+    "For comparison and planning only; obtain formal utility quotes for real projects."
 )
 st.markdown(f'<p style="color: #475569; font-size: 0.875rem; margin-top: -0.5rem;">{_static_caption}</p>', unsafe_allow_html=True)
 st.markdown("**Assumptions:** IT load = **100 MW** (constant); hours = **8,760**/year.")
@@ -84,7 +84,7 @@ with st.expander("Methodology", expanded=False):
     st.markdown(
         "This page combines effective electric and water costs into annual dollar estimates for a 100 MW IT load. "
         "Electric cost uses PUE and state electric rates; water cost uses WUE, state water rates, and an optional drought surge based on historical drought risk. "
-        "Results are for comparison and planning only—not a substitute for actual utility quotes (e.g. demand charges, time-of-use rates)."
+        "Results are for comparison and planning only; obtain formal utility quotes for real projects (e.g. demand charges, time-of-use rates)."
     )
 
 def _fmt_currency(s: pd.Series) -> pd.Series:
