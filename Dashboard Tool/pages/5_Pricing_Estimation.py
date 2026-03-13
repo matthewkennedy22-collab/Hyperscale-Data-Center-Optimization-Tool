@@ -72,11 +72,12 @@ comp["annual_total_usd"] = comp["annual_electric_usd"] + comp["annual_water_usd"
 
 # ---- Title and assumptions ----
 st.markdown("### Pricing estimation (100 MW IT load)")
-st.caption(
+_static_caption = (
     "This page is where effective utility cost is used: power and water costs are combined into total annual $. "
     "Water uses the full equation: Water = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk (% time in severe drought). "
     "Electric = PUE × state rate. Not a substitute for utility quotes (e.g. demand charges, TOU)."
 )
+st.markdown(f'<p style="color: #475569; font-size: 0.875rem; margin-top: -0.5rem;">{_static_caption}</p>', unsafe_allow_html=True)
 st.markdown("**Assumptions:** IT load = **100 MW** (constant); hours = **8,760**/year.")
 
 with st.expander("Methodology", expanded=False):
