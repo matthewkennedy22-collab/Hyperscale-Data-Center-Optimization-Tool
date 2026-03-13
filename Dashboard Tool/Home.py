@@ -25,7 +25,7 @@ n_selected = len(st.session_state.get("selected_county_fips", []))
 st.markdown("""
 <div class="hero">
 <h1>Hyperscale Data Center Optimization Tool</h1>
-<p>PUE WUE cost, location/system comparison, weather comparison, and drought risk comparison. Select one or more counties in the sidebar, then explore Weather, System Comparison, and Drought pages.</p>
+<p>Compare where and how to cool a hyperscale data center at the county level. Select one or more counties in the sidebar; the tool then pulls data points on PUE and WUE for both Air Economizer (AE) and Water Economizer (WEC), weather patterns, drought risk, composite rankings, and annual cost estimates.</p>
 </div>
 """, unsafe_allow_html=True)
 
