@@ -49,16 +49,6 @@ summary = df.groupby(["county_fips", "County"], as_index=False).agg(
     n_weeks=("drought_level_avg", "count"),
 ).round(2)
 summary = sort_df_by_county_order(summary, "County")
-# Highest and lowest drought risk (insightful, not average)
-high_risk = summary.loc[summary["mean_drought"].idxmax()]
-low_risk = summary.loc[summary["mean_drought"].idxmin()]
-high_label = f"{high_risk['County']} ({high_risk['mean_drought']:.2f})"
-low_label = f"{low_risk['County']} ({low_risk['mean_drought']:.2f})"
-metric_row([
-    (str(len(summary)), "Counties"),
-    (high_label[:30] + "…" if len(high_label) > 30 else high_label, "Highest drought risk"),
-    (low_label[:30] + "…" if len(low_label) > 30 else low_label, "Lowest drought risk"),
-])
 
 # Tabs at top: Risk summary first (Drought risk summary by county)
 tab_names = ["Risk summary", "Category breakdown"]
