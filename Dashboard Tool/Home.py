@@ -179,7 +179,7 @@ with col2:
         st.switch_page("pages/2_System_Comparison.py")
 with col3:
     if st.button("Drought risk comparison", use_container_width=True, key="nav_drought"):
-        st.switch_page("pages/2_Drought_Risk_Comparison.py")
+        st.switch_page("pages/3_Drought_Risk_Comparison.py")
 with col4:
     if st.button("Comparison insights", use_container_width=True, key="nav_insights"):
         st.switch_page("pages/4_Comparison_Insights.py")
