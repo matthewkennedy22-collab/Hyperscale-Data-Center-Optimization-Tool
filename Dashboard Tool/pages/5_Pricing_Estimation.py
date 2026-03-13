@@ -73,22 +73,18 @@ comp["annual_total_usd"] = comp["annual_electric_usd"] + comp["annual_water_usd"
 # ---- Title and assumptions ----
 st.markdown("### Pricing estimation")
 _static_caption = (
-    "This page is where effective utility cost is used: power and water costs are combined into total annual $. "
-    "Water uses the full equation: Water = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk (% time in severe drought). "
-    "Electric = PUE × state rate. Not a substitute for utility quotes (e.g. demand charges, TOU)."
+    "Estimate annual power and water costs for your selected counties and cooling systems. "
+    "Uses effective electric and water rates; water costs include drought surge where applicable. "
+    "For illustration only—not a substitute for utility quotes."
 )
 st.markdown(f'<p style="color: #475569; font-size: 0.875rem; margin-top: -0.5rem;">{_static_caption}</p>', unsafe_allow_html=True)
 st.markdown("**Assumptions:** IT load = **100 MW** (constant); hours = **8,760**/year.")
 
 with st.expander("Methodology", expanded=False):
     st.markdown(
-        "Effective utility cost (used only on this page) = effective electric + effective water (with drought surge), converted to annual $.\n\n"
-        "- Effective electric (¢/kWh IT) = PUE × state electric rate. "
-        "Annual electric $ = (effective electric ÷ 100) × 8,760 h × 100 MW.\n"
-        "- Effective water (¢/kWh IT) = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk (Drought risk = % of time in severe drought over last 10 years). "
-        "Equivalent form: (WUE / 3785.41) × state water $/kgal × (1 + surge_pct × % severe drought). "
-        "Annual water $ = effective water × 8,760 h × 100 MW.\n"
-        "- Total annual = annual electric $ + annual water $."
+        "This page combines effective electric and water costs into annual dollar estimates for a 100 MW IT load. "
+        "Electric cost uses PUE and state electric rates; water cost uses WUE, state water rates, and an optional drought surge based on historical drought risk. "
+        "Results are for comparison and planning only—not a substitute for actual utility quotes (e.g. demand charges, time-of-use rates)."
     )
 
 def _fmt_currency(s: pd.Series) -> pd.Series:
