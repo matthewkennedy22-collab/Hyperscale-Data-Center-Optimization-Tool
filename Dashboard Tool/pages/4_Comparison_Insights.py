@@ -251,12 +251,12 @@ else:
 # Lowest power and water cost (county×system combinations)
 try:
     cheap_elec = comp.loc[comp["effective_electric"].idxmin()]
-    insights.append(f"**Lowest power cost:** {cheap_elec['County']} — **{cheap_elec['system']}** ({cheap_elec['effective_electric']:.2f} ¢/kWh IT).")
+    insights.append(f"**Lowest power cost (PUE × electric rate):** {cheap_elec['County']} — **{cheap_elec['system']}** ({cheap_elec['effective_electric']:.2f} ¢/kWh IT).")
 except Exception:
     pass
 try:
     cheap_w = comp.loc[comp["effective_water_cents"].idxmin()]
-    insights.append(f"**Lowest water cost (base):** {cheap_w['County']} — **{cheap_w['system']}** ({cheap_w['effective_water_cents']:.2f} ¢/kWh IT).")
+    insights.append(f"**Lowest water cost (WUE × water rate):** {cheap_w['County']} — **{cheap_w['system']}** ({cheap_w['effective_water_cents']:.2f} ¢/kWh IT).")
 except Exception:
     pass
 

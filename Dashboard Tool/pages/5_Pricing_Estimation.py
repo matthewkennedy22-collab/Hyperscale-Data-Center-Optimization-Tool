@@ -240,4 +240,25 @@ fig.update_layout(
 )
 st.plotly_chart(fig, use_container_width=True)
 
+# ---- Tailored insights (based on our model) ----
+section_header("Tailored insights", "Based on the model (100 MW IT load, state rates, drought surge).")
+pricing_insights = []
+try:
+    low_elec = comp.loc[comp["annual_electric_usd"].idxmin()]
+    pricing_insights.append(f"**Lowest annual power cost:** {low_elec['County']} — **{low_elec['system']}** (${low_elec['annual_electric_usd']:,.0f}/year).")
+except Exception:
+    pass
+try:
+    low_water = comp.loc[comp["annual_water_usd"].idxmin()]
+    pricing_insights.append(f"**Lowest annual water cost:** {low_water['County']} — **{low_water['system']}** (${low_water['annual_water_usd']:,.0f}/year).")
+except Exception:
+    pass
+try:
+    low_total = comp.loc[comp["annual_total_usd"].idxmin()]
+    pricing_insights.append(f"**Lowest total annual cost:** {low_total['County']} — **{low_total['system']}** (${low_total['annual_total_usd']:,.0f}/year).")
+except Exception:
+    pass
+for line in pricing_insights:
+    st.markdown(f"- {line}")
+
 back_to_top_button()
