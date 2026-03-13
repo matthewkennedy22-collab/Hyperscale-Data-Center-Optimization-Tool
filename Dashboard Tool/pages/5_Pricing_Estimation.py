@@ -153,7 +153,11 @@ try:
 except Exception:
     st.dataframe(water_display_fmt, use_container_width=True, hide_index=True)
 
-section_header("Total annual utility cost", "Annual electric $ + annual water $.")
+section_header("Total annual utility cost")
+st.markdown(
+    '<p style="color: #475569; font-size: 0.875rem; margin: 0;">Annual electric $ + annual water $.</p>',
+    unsafe_allow_html=True,
+)
 total_sorted = comp.sort_values("annual_total_usd").reset_index(drop=True)
 total_display = total_sorted[["County", "system", "annual_electric_usd", "annual_water_usd", "annual_total_usd"]].copy()
 total_display = total_display.rename(columns={
