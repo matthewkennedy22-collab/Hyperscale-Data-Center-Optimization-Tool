@@ -53,7 +53,7 @@ st.caption("Annual average PUE, WUE, and effective cost by county. AE = Air Econ
 tab_pue, tab_wue, tab_cost = st.tabs(["PUE comparison", "WUE comparison", "Effective cost"])
 
 with tab_pue:
-    with st.expander("What is PUE, and when is the line flat?", expanded=False):
+    with st.expander("What is PUE?", expanded=False):
         st.markdown("""
 **PUE (Power Usage Effectiveness)** is total facility power divided by IT power — how much extra energy (cooling, lighting, etc.) is needed per unit of IT load. Lower is better (1.0 = no overhead).
 
@@ -141,7 +141,7 @@ The underlying simulation uses a **fixed IT load** (constant per-kWh basis), so 
         st.plotly_chart(fig_pue_line, use_container_width=True)
 
 with tab_wue:
-    with st.expander("What is WUE, and why is the WEC line flat?", expanded=False):
+    with st.expander("What is WUE?", expanded=False):
         st.markdown("""
 **WUE (Water Usage Effectiveness)** is water consumed per kWh of IT load (e.g. L/kWh IT). Lower is better.
 

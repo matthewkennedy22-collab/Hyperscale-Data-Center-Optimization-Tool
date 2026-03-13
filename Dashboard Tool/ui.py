@@ -2,6 +2,8 @@
 import streamlit as st
 import plotly.graph_objects as go
 
+from _utils import PLOTLY_COLORWAY
+
 # Plotly layout defaults: legend on the right so it doesn't block axis labels
 PLOTLY_LAYOUT = dict(
     font=dict(family="Inter, system-ui, sans-serif", size=12),
@@ -23,15 +25,6 @@ PLOTLY_LAYOUT = dict(
     yaxis=dict(showgrid=True, gridwidth=1, gridcolor="rgba(0,0,0,0.06)", zeroline=False),
     height=380,
 )
-# Distinct hues so counties are easy to tell apart (blue, orange, green, red, purple, brown)
-PLOTLY_COLORWAY = [
-    "#0e7490",   # teal
-    "#ea580c",   # orange
-    "#059669",   # emerald
-    "#dc2626",   # red
-    "#7c3aed",   # violet
-    "#b45309",   # amber/brown
-]
 
 # App-wide: color = location (county), pattern/symbol = system. Use same convention on every chart.
 # AE = solid fill / circle; WEC = striped fill / square.

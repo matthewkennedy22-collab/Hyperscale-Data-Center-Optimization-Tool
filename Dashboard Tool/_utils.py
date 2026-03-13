@@ -5,7 +5,15 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from ui import PLOTLY_COLORWAY
+# Plotly color palette for county/series (shared with ui.apply_chart_theme)
+PLOTLY_COLORWAY = [
+    "#0e7490",   # teal
+    "#ea580c",   # orange
+    "#059669",   # emerald
+    "#dc2626",   # red
+    "#7c3aed",   # violet
+    "#b45309",   # amber/brown
+]
 
 # WUE in Lei & Masanet is typically reported as liters per kWh (L/kWh).
 # Pricing file uses $ per thousand gallons (kgal). 1 kgal = 3785.411784 liters.
