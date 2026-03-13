@@ -99,7 +99,10 @@ def _fmt_currency(s: pd.Series) -> pd.Series:
 # Same column order for both: County, system, Effective rate (¢/kWh IT), Annual cost ($) last.
 # Each table sorted by its own annual cost metric (lowest first).
 section_header("Annual power (electric) cost", "From PUE × state electric rate × 8,760 h × 100 MW.")
-st.markdown("**Effective Power Cost** (¢/kWh IT) = PUE × state electric rate. Annual electric $ = (effective power cost ÷ 100) × 8,760 h × 100 MW.")
+st.markdown(
+    '<p style="color: #475569; font-size: 0.875rem; margin: 0;"><strong>Effective Power Cost</strong> (¢/kWh IT) = PUE × state electric rate.</p>',
+    unsafe_allow_html=True,
+)
 elec_sorted = comp.sort_values("annual_electric_usd").reset_index(drop=True)
 elec_display = elec_sorted[["County", "system", "effective_electric", "annual_electric_usd"]].copy()
 elec_display = elec_display.rename(columns={
@@ -128,7 +131,10 @@ except Exception:
     st.dataframe(elec_display_fmt, use_container_width=True, hide_index=True)
 
 section_header("Annual water cost", "From WUE × state water rate × (1 + drought surge) × 8,760 h × 100 MW.")
-st.markdown("**Effective Water Cost** (¢/kWh IT) = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk. Annual water $ = effective water cost × 8,760 h × 100 MW.")
+st.markdown(
+    '<p style="color: #475569; font-size: 0.875rem; margin: 0;"><strong>Effective Water Cost</strong> (¢/kWh IT) = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk.</p>',
+    unsafe_allow_html=True,
+)
 water_sorted = comp.sort_values("annual_water_usd").reset_index(drop=True)
 water_display = water_sorted[["County", "system", "effective_water_surge", "annual_water_usd"]].copy()
 water_display["Effective water (¢/kWh IT)"] = (water_display["effective_water_surge"] * 100).round(3)
