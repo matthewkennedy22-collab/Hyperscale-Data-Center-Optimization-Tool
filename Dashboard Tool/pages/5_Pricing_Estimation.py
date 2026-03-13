@@ -241,7 +241,7 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # ---- Tailored insights (based on our model) ----
-section_header("Tailored insights", "Based on the model (100 MW IT load, state rates, drought surge).")
+section_header("Tailored insights", "Based on the model. PUE and WUE based on 100 MW IT load; state rates; drought surge.")
 pricing_insights = []
 try:
     low_elec = comp.loc[comp["annual_electric_usd"].idxmin()]
