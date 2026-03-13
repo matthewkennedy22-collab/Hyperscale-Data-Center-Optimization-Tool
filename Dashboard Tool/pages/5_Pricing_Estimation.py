@@ -71,7 +71,7 @@ comp["annual_water_usd"] = comp["effective_water_surge"] * KWH_PER_YEAR
 comp["annual_total_usd"] = comp["annual_electric_usd"] + comp["annual_water_usd"]
 
 # ---- Title and assumptions ----
-st.markdown("### Pricing estimation (100 MW IT load)")
+st.markdown("### Pricing estimation")
 _static_caption = (
     "This page is where effective utility cost is used: power and water costs are combined into total annual $. "
     "Water uses the full equation: Water = WUE × (Water $/kgal + Penalty), with Penalty = Drought Surge Price × Drought Risk (% time in severe drought). "
