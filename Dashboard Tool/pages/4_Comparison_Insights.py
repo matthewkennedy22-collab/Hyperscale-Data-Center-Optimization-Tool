@@ -248,18 +248,15 @@ if not high_drought.empty:
 else:
     insights.append("Drought levels are low in selected counties; water stress risk is driven mainly by WUE.")
 
-# Electric cost spread
+# Lowest power and water cost (county×system combinations)
 try:
-    if comp["effective_electric"].max() > comp["effective_electric"].min() * 1.1:
-        cheap = comp.loc[comp["effective_electric"].idxmin()]
-        insights.append(f"**Lowest electric cost:** {cheap['County']} — **{cheap['system']}** ({cheap['effective_electric']:.2f} ¢/kWh).")
+    cheap_elec = comp.loc[comp["effective_electric"].idxmin()]
+    insights.append(f"**Lowest power cost:** {cheap_elec['County']} — **{cheap_elec['system']}** ({cheap_elec['effective_electric']:.2f} ¢/kWh IT).")
 except Exception:
     pass
-# Water cost spread
 try:
-    if comp["effective_water_cents"].max() > comp["effective_water_cents"].min() * 1.1:
-        cheap_w = comp.loc[comp["effective_water_cents"].idxmin()]
-        insights.append(f"**Lowest water cost (base):** {cheap_w['County']} — **{cheap_w['system']}** ({cheap_w['effective_water_cents']:.2f} ¢/kWh IT).")
+    cheap_w = comp.loc[comp["effective_water_cents"].idxmin()]
+    insights.append(f"**Lowest water cost (base):** {cheap_w['County']} — **{cheap_w['system']}** ({cheap_w['effective_water_cents']:.2f} ¢/kWh IT).")
 except Exception:
     pass
 
