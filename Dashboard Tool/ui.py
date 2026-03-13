@@ -1,5 +1,6 @@
 """Shared UI components, CSS, and Plotly chart styling for the dashboard."""
 import streamlit as st
+import plotly.graph_objects as go
 
 # Plotly layout defaults: legend on the right so it doesn't block axis labels
 PLOTLY_LAYOUT = dict(

@@ -59,30 +59,13 @@ for col in ["effective_electric", "effective_water", "water_stress"]:
 st.markdown("### Comparison insights")
 st.caption("Compare counties and cooling systems (AE vs WEC) by power cost, water cost, and water scarcity. Use the slider to weight power vs water, then explore the summary and dive into each area below.")
 
-# Dropdown above slider: how calculations work and how weighting affects composite
-with st.expander("How calculations work & how weighting affects the composite score", expanded=False):
+# Dropdown above slider: how the composite is calculated
+with st.expander("How the composite is calculated", expanded=False):
     st.markdown("""
-**Composite uses separate PUE and WUE terms** — we do **not** merge them into an \"effective utility cost.\" That combined cost (with full water equation including drought penalty) is used only on **Pricing Estimation** for total annual $.
-
-**Inputs (per county × cooling system), each normalized then weighted:**
-- **Electric** (PUE-based): PUE × state electric rate → ¢/kWh IT. Lower is better.
-- **Water cost** (WUE-based, **base only**): WUE × state water $/kgal → ¢/kWh IT. No drought surge here. For cost with surge, see **Pricing Estimation**.
-- **Scarcity risk** (WUE-based): *How risky is this location's water future?* — WUE × (1 + % of time in severe drought, D2–D4). Lower is better.
-
-**Normalization:** For your selected counties and systems, each of these three is scaled to 0–1: the best (lowest) value becomes 0, the worst (highest) becomes 1. So every row has three normalized scores: electric_n, water_n, water_stress_n.
-
-**Composite score equation:**
-```
-composite = (w_electric × electric_n + w_water × water_n + w_drought × water_stress_n) / total_weight
-```
-where `total_weight = w_electric + w_water + w_drought` (always 1). Power weight = w_electric; water weight = w_water + w_drought (base water cost and scarcity risk).
-
-**How the slider (Power ↔ Water) affects it:**
-- **Power (left):** 100% power, 0% water → only electric cost matters. Best fit = lowest electric cost.
-- **Water (right):** 0% power, 100% water → only water cost and scarcity risk matter. Best fit = lowest water cost and scarcity risk.
-- **Middle (balanced):** 50% power, 50% water → electric and (water cost + drought) weighted equally; within water, cost and drought each get half. Best fit = best average across both sides.
-
-**Higher composite = better overall fit** (score 0–100) for your chosen weighting. Rankings update as you move the slider.
+- **Electric:** PUE × state rate → ¢/kWh IT. Normalized so the worst county×system in your selection = 1.
+- **Water (base):** WUE × state water $/kgal at base rates (no surge). Normalized the same way. For cost including surcharges, see Pricing Estimation.
+- **Scarcity risk:** *How risky is this location's water future?* — WUE × (1 + % of time in severe drought, D2–D4). Normalized the same way.
+- **Weights:** Power slider sets how much to favor power vs water. **Composite = 100 × (1 − weighted average of normalized costs).** Score 0–100; higher = better overall fit.
 """)
 
 st.markdown("**Set your priority:** Drag the slider to favor **Power** (electric cost only), **Water** (water cost + drought), or a balance. The composite score and rankings below update as you move it.")
@@ -176,8 +159,10 @@ ordered_labels, county_color_map = get_county_color_map()
 
 # ---- Composite score ranking (overview at top) ----
 section_header("Composite score ranking", "County × system ranked by composite score (higher = better fit for your Power ↔ Water setting).")
-comp_chart = comp_sorted.iloc[::-1].reset_index(drop=True)  # reverse so best (Rank 1) appears at top of chart
+comp_chart = comp_sorted.copy()
 comp_chart["County × System"] = comp_chart["County"] + " — " + comp_chart["system"]
+# Fix y-axis order: rank 1 (best) at top, worst at bottom
+y_order = comp_chart["County × System"].tolist()
 fig_rank = px.bar(
     comp_chart,
     x="composite",
@@ -193,12 +178,16 @@ fig_rank = px.bar(
 )
 fig_rank.update_traces(texttemplate="%{text:.1f}", textposition="outside")
 fig_rank = apply_chart_theme(fig_rank, height=max(280, len(comp_chart) * 36))
-fig_rank.update_layout(showlegend=True, legend=dict(orientation="v", x=1.02, y=1, xanchor="left", yanchor="top"), yaxis=dict(autorange="reversed"))
+fig_rank.update_layout(
+    showlegend=True,
+    legend=dict(orientation="v", x=1.02, y=1, xanchor="left", yanchor="top"),
+    yaxis=dict(autorange="reversed", categoryorder="array", categoryarray=y_order),
+)
 st.plotly_chart(fig_rank, use_container_width=True)
 
 # ---- Comparison table (breakdown, ordered by composite) ----
-section_header("Comparison table", "State rates (cost of power and water before PUE/WUE), then PUE, WUE, effective costs, % weeks severe, water stress, and composite. So you can see how each county's cost affects the score.")
-display_cols = ["Rank", "County", "system", "PUE", "WUE", "electric_cents_per_kwh", "water_dollars_per_kgal", "effective_electric", "effective_water_cents", "pct_weeks_d2_plus", "water_stress", "composite"]
+section_header("Comparison table", "Rank, county, system, PUE, WUE, electric rate, water rate, % weeks severe, and composite score.")
+display_cols = ["Rank", "County", "system", "PUE", "WUE", "electric_cents_per_kwh", "water_dollars_per_kgal", "pct_weeks_d2_plus", "composite"]
 # Only include rate columns if we have them (pricing merged)
 if "electric_cents_per_kwh" not in comp_sorted.columns or "water_dollars_per_kgal" not in comp_sorted.columns:
     display_cols = [c for c in display_cols if c not in ("electric_cents_per_kwh", "water_dollars_per_kgal")]
@@ -207,10 +196,7 @@ display_df = display_df.rename(columns={
     "system": "System",
     "electric_cents_per_kwh": "Electric rate (¢/kWh)",
     "water_dollars_per_kgal": "Water rate ($/kgal)",
-    "effective_electric": "Electric cost (¢/kWh IT)",
-    "effective_water_cents": "Water cost (base ¢/kWh IT)",
     "pct_weeks_d2_plus": "% weeks severe (D2–D4)",
-    "water_stress": "Water stress",
     "composite": "Composite score",
 })
 display_df = display_df.round(4)
@@ -237,85 +223,7 @@ except Exception:
     st.dataframe(display_df, use_container_width=True, hide_index=True)
 st.download_button("Download comparison (CSV)", display_df.to_csv(index=False).encode("utf-8"), file_name="comparison_insights.csv", mime="text/csv", key="dl_insights")
 
-# ---- Dive into: Power (electric cost) ----
-st.markdown("---")
-section_header("Power: electric cost", "PUE × state electric rate → ¢/kWh IT. Lower is better.")
-# Cost comparison electric part (electric vs water bars) - show electric first in a compact way
-cost_long = comp.melt(
-    id_vars=["County", "system"],
-    value_vars=["effective_electric", "effective_water_cents"],
-    var_name="Cost type",
-    value_name="Value",
-)
-cost_long["Cost type"] = cost_long["Cost type"].map({"effective_electric": "Electric (¢/kWh IT)", "effective_water_cents": "Water base (¢/kWh IT)"})
-fig_cost = px.bar(
-    cost_long,
-    x="County",
-    y="Value",
-    color="County",
-    pattern_shape="system",
-    facet_row="Cost type",
-    barmode="group",
-    title="Electric and water (base) by county and system",
-    labels={"Value": "Cost (¢/kWh IT)"},
-    color_discrete_map=county_color_map,
-    pattern_shape_map=SYSTEM_PATTERN_MAP,
-)
-fig_cost = apply_chart_theme(fig_cost)
-fig_cost.update_layout(xaxis_tickangle=-45)
-# Remove facet row annotations (unreadable vertical "Cost type" label)
-fig_cost.for_each_annotation(lambda a: a.update(text=""))
-st.plotly_chart(fig_cost, use_container_width=True)
-
-# ---- Dive into: Water (cost & scarcity) ----
-st.markdown("---")
-section_header("Water: base cost and scarcity", "**Water (base)** = base rate only (no surge). **Scarcity risk** = *how risky is this location's water future?* — WUE × (1 + % time in severe drought, D2–D4). Lower is better. For cost including drought surcharges, see Pricing Estimation.")
-# Scarcity risk (water stress) bar chart
-fig_ws = px.bar(
-    comp,
-    x="County",
-    y="water_stress",
-    color="County",
-    pattern_shape="system",
-    barmode="group",
-    title="Scarcity risk (WUE × drought exposure) by county and system",
-    labels={"water_stress": "Scarcity risk", "system": "System"},
-    color_discrete_map=county_color_map,
-    pattern_shape_map=SYSTEM_PATTERN_MAP,
-)
-fig_ws = apply_chart_theme(fig_ws)
-fig_ws.update_layout(xaxis_tickangle=-45)
-st.plotly_chart(fig_ws, use_container_width=True)
-
-# ---- Composite score ----
-st.markdown("---")
-section_header("Composite score", "Single weighted score (0–100) combining power cost, water cost, and water scarcity. **Higher = better fit** for your Power ↔ Water setting above.")
-with st.expander("How the composite is calculated", expanded=False):
-    st.markdown(
-        "- **Electric:** PUE × state rate → ¢/kWh IT. Normalized so the worst county×system in your selection = 1.\n"
-        "- **Water (base):** WUE × state water $/kgal at base rates (no surge). Normalized the same way. For cost including surcharges, see Pricing Estimation.\n"
-        "- **Scarcity risk:** *How risky is this location's water future?* — WUE × (1 + % of time in severe drought, D2–D4). Normalized the same way.\n"
-        "- **Weights:** Power slider sets how much to favor power vs water. Composite = 100 × (1 − weighted average of normalized costs). Score 0–100; higher = better overall fit."
-    )
-
-# Ranking chart: Rank on x-axis; color = county, pattern = system (solid AE, striped WEC)
-st.markdown("**Ranking** — Best (highest composite) to worst (lowest).")
-fig_comp = px.bar(
-    comp_sorted,
-    x="Rank",
-    y="composite",
-    color="County",
-    pattern_shape="system",
-    hover_data=["County", "PUE", "WUE", "effective_electric", "effective_water_cents", "mean_drought", "water_stress"],
-    title="Composite score rank (higher is better, out of 100)",
-    labels={"composite": "Composite score", "Rank": "Rank"},
-    color_discrete_map=county_color_map,
-    pattern_shape_map=SYSTEM_PATTERN_MAP,
-)
-fig_comp = apply_chart_theme(fig_comp)
-st.plotly_chart(fig_comp, use_container_width=True)
-
-# Tailored insights (inside Composite section)
+# ---- Tailored insights ----
 section_header("Tailored insights", "Summary based on your selected counties, systems, and current Power ↔ Water weight.")
 insights = []
 
