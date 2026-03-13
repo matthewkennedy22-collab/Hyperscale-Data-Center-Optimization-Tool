@@ -25,7 +25,7 @@ n_selected = len(st.session_state.get("selected_county_fips", []))
 st.markdown("""
 <div class="hero">
 <h1>Hyperscale Data Center Optimization Tool</h1>
-<p>PUE WUE cost, location/system comparison, weather impacts, and drought risk. Select one or more counties in the sidebar, then explore Weather, System Comparison, and Drought pages.</p>
+<p>PUE WUE cost, location/system comparison, weather comparison, and drought risk comparison. Select one or more counties in the sidebar, then explore Weather, System Comparison, and Drought pages.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -37,9 +37,9 @@ with st.expander("About this tool — scope, use, constraints & data", expanded=
 
     **Suggested use**  
     - **Select one or more counties** in the sidebar.  
-    - Use **Weather impacts** to see temperature, humidity, and pressure over time and how they relate to PUE/WUE.  
+    - Use **Weather comparison** to see temperature, humidity, and pressure over time and how they relate to PUE/WUE.  
     - Use **System comparison** to compare AE vs WEC (PUE, WUE, effective cost in ¢/kWh IT and $/kWh IT, and cost over the year by week).  
-    - Use **Drought risk** to review drought index over 10 years and seasonal patterns.  
+    - Use **Drought risk comparison** to review drought index over 10 years and seasonal patterns.  
     - Use **Comparison insights** to set weights (electric cost, water cost, water scarcity) and see composite scores and text recommendations (e.g. best fit, high-drought areas, lowest cost).
 
     **Simulation tool (PUE & WUE)**  
@@ -172,14 +172,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    if st.button("Weather impacts", use_container_width=True, key="nav_weather"):
-        st.switch_page("pages/1_Weather_Impacts.py")
+    if st.button("Weather comparison", use_container_width=True, key="nav_weather"):
+        st.switch_page("pages/1_Weather_Comparison.py")
 with col2:
     if st.button("System comparison", use_container_width=True, key="nav_sys"):
         st.switch_page("pages/2_System_Comparison.py")
 with col3:
-    if st.button("Drought risk", use_container_width=True, key="nav_drought"):
-        st.switch_page("pages/3_Drought_Risk.py")
+    if st.button("Drought risk comparison", use_container_width=True, key="nav_drought"):
+        st.switch_page("pages/2_Drought_Risk_Comparison.py")
 with col4:
     if st.button("Comparison insights", use_container_width=True, key="nav_insights"):
         st.switch_page("pages/4_Comparison_Insights.py")

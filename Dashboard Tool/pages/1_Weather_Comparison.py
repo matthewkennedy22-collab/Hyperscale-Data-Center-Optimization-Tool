@@ -1,4 +1,4 @@
-"""Weather pattern impacts: time series, distributions, and PUE/WUE vs weather."""
+"""Weather comparison: time series, distributions, and PUE/WUE vs weather."""
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -10,7 +10,7 @@ import plotly.express as px
 from _utils import render_sidebar, get_rollup, get_pricing, selected_counties_df, ensure_data, get_county_color_map, sort_df_by_county_order
 from ui import apply_global_css, section_header, apply_chart_theme, metric_row, back_to_top_button, page_top_anchor
 
-st.set_page_config(page_title="Weather impacts | County Dashboard", page_icon="•", layout="wide")
+st.set_page_config(page_title="Weather comparison | County Dashboard", page_icon="•", layout="wide")
 apply_global_css()
 render_sidebar()
 page_top_anchor()
@@ -20,7 +20,7 @@ rollup = get_rollup()
 pricing = get_pricing()
 df = selected_counties_df(rollup, pricing)
 if df is None or df.empty:
-    st.info("Select one or more counties in the sidebar to view weather impacts.")
+    st.info("Select one or more counties in the sidebar to view weather comparison.")
     st.stop()
 
 df = df.copy()
@@ -37,7 +37,7 @@ else:
     df["period_sort"] = df["year"] * 100 + df["month"]
     period_col = "month"
 
-st.markdown("### Weather pattern impacts")
+st.markdown("### Weather comparison")
 year_min = int(df["year"].min()) if "year" in df.columns and pd.notna(df["year"].min()) else None
 year_max = int(df["year"].max()) if "year" in df.columns and pd.notna(df["year"].max()) else None
 if year_min is not None and year_max is not None:

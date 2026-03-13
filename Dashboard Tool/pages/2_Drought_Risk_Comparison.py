@@ -1,4 +1,4 @@
-"""Drought risk & mapping: 10-year series, week-of-year pattern, summary by county."""
+"""Drought risk comparison: 10-year series, week-of-year pattern, summary by county."""
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 from _utils import render_sidebar, get_drought, get_counties, selected_drought_df, get_county_color_map, lighten_hex, sort_df_by_county_order
 from ui import apply_global_css, section_header, apply_chart_theme, metric_row, back_to_top_button, page_top_anchor
 
-st.set_page_config(page_title="Drought risk | County Dashboard", page_icon="•", layout="wide")
+st.set_page_config(page_title="Drought risk comparison | County Dashboard", page_icon="•", layout="wide")
 apply_global_css()
 render_sidebar()
 page_top_anchor()
@@ -28,7 +28,7 @@ if drought is None:
 counties_df = get_counties()
 df = selected_drought_df(drought)
 if df is None or df.empty:
-    st.info("Select one or more counties in the sidebar to view drought risk.")
+    st.info("Select one or more counties in the sidebar to view drought risk comparison.")
     st.stop()
 
 if counties_df is not None and not counties_df.empty:
@@ -39,7 +39,7 @@ else:
 df = sort_df_by_county_order(df, "County")
 _, county_color_map = get_county_color_map()
 
-st.markdown("### Drought risk & patterns")
+st.markdown("### Drought risk comparison & patterns")
 st.caption("10-year weekly drought index. 0 = no drought, 5 = exceptional (D4).")
 
 summary = df.groupby(["county_fips", "County"], as_index=False).agg(
