@@ -47,22 +47,20 @@ else:
 period_label = "week" if period_col == "week" else "month"
 st.caption(f"{'Weekly' if period_col == 'week' else 'Monthly'} averages from county × {period_label} rollup ({year_label}).")
 
-# Temperature unit: °C or °F (data is stored in °C)
-temp_unit = st.radio("Temperature unit", ["°C", "°F"], horizontal=True, key="weather_temp_unit")
-use_fahrenheit = temp_unit == "°F"
+# Temperatures in °C (data is stored in °C)
 if "temp_c" in df.columns:
-    df["temp_display"] = (df["temp_c"] * 9/5 + 32) if use_fahrenheit else df["temp_c"]
-temp_label = "Temperature (°F)" if use_fahrenheit else "Temperature (°C)"
+    df["temp_display"] = df["temp_c"]
+temp_label = "Temperature (°C)"
 
 # Per-county means for insight
 county_weather = df.groupby("County", as_index=False).agg(temp_c=("temp_c", "mean"), rh_pct=("rh_pct", "mean"))
 n_c = len(county_weather)
 warmest = county_weather.loc[county_weather["temp_c"].idxmax()]
 coolest = county_weather.loc[county_weather["temp_c"].idxmin()]
-def _temp_str(t_c, fahrenheit):
-    return f"{(t_c * 9/5 + 32):.1f}°F" if fahrenheit else f"{t_c:.1f}°C"
-warm_label = f"{warmest['County']} ({_temp_str(warmest['temp_c'], use_fahrenheit)})"
-cool_label = f"{coolest['County']} ({_temp_str(coolest['temp_c'], use_fahrenheit)})"
+def _temp_str(t_c):
+    return f"{t_c:.1f}°C"
+warm_label = f"{warmest['County']} ({_temp_str(warmest['temp_c'])})"
+cool_label = f"{coolest['County']} ({_temp_str(coolest['temp_c'])})"
 metric_row([
     (str(n_c), "Counties"),
     (warm_label[:28] + "…" if len(warm_label) > 28 else warm_label, "Warmest (avg temp)"),
